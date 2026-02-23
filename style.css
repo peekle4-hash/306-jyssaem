@@ -29,17 +29,17 @@ body {
 
 /* ===== HEADER ===== */
 header {
-  background: linear-gradient(135deg, #FFD6E0 0%, #FFF4A3 50%, #D4F5E9 100%);
+  background: #FFF0F5;
   padding: 40px 20px 32px;
   text-align: center;
-  border-bottom: 4px solid #FFE066;
+  border-bottom: 4px solid #FFB7C5;
   position: relative;
   overflow: hidden;
 }
 header::before {
   content: '🌸🌷🌼🌸🌷🌼🌸🌷🌼🌸🌷🌼🌸🌷🌼';
   position: absolute; top: 8px; left: 0; right: 0;
-  font-size: 14px; letter-spacing: 4px; opacity: 0.4;
+  font-size: 14px; letter-spacing: 4px; opacity: 0.3;
 }
 .header-inner { position: relative; z-index: 1; }
 .header-title {
@@ -52,19 +52,21 @@ header::before {
 h1 {
   font-size: 20px; font-weight: 900; color: #555;
   line-height: 1.2;
+  font-family: 'Noto Sans KR', sans-serif;
 }
 .big-title {
   font-size: 48px; font-weight: 900;
-  background: linear-gradient(90deg, #FF8FAB, #FFB347, #6BCBA0);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-  -webkit-text-stroke: 0;
+  color: #FF6B9D;
   display: block;
+  font-family: 'Noto Sans KR', sans-serif;
+  -webkit-text-fill-color: #FF6B9D;
+  background: none;
   text-shadow: none;
 }
 .subtitle {
   margin-top: 8px; font-size: 14px; color: #888; font-weight: 700;
   letter-spacing: 2px;
+  font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* ===== TABS NAV ===== */
@@ -368,6 +370,37 @@ footer {
   border-top: 3px dashed var(--pink);
 }
 footer p { font-weight: 700; color: #888; margin-bottom: 4px; }
+
+/* ===== SCHOOL HOME BUTTON ===== */
+.school-home-btn {
+  text-decoration: none !important;
+  background: #FF6B9D !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+.school-home-btn:hover { background: #e8588a !important; color: #fff !important; }
+
+/* ===== DOWNLOAD BUTTONS ===== */
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.dl-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border-radius: 12px;
+  text-decoration: none; font-weight: 700; font-size: 14px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+.dl-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+.dl-icon { font-size: 20px; flex-shrink: 0; }
+.dl-label { font-size: 13px; font-weight: 700; }
+.dl-yellow { background: var(--yellow2); color: #555; border: 2px solid var(--yellow); }
+.dl-pink   { background: var(--pink2);   color: #c0446a; border: 2px solid var(--pink); }
+.dl-green  { background: var(--green2);  color: #277a54; border: 2px solid var(--green); }
+.dl-blue   { background: var(--blue2);   color: #2266aa; border: 2px solid var(--blue); }
+.dl-orange { background: #FFF3E0; color: #b05e00; border: 2px solid var(--orange); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
