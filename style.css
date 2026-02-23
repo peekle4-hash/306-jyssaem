@@ -409,3 +409,16 @@ footer p { font-weight: 700; color: #888; margin-bottom: 4px; }
   .admission-cards { grid-template-columns: 1fr; }
   .meal-grid { grid-template-columns: repeat(2, 1fr); }
 }
+.delete-photo-btn {
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: #ff4d6d;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+}
+.delete-photo-btn:hover { background: #e03055; }

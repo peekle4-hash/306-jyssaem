@@ -1,5 +1,5 @@
 /* ===================================================
-   슬기로운 301 생활 – app.js
+   슬기로운 306 생활 – app.js
    =================================================== */
 
 // ─── TAB NAVIGATION ───────────────────────────────
@@ -142,9 +142,10 @@ document.getElementById('nextWeek').addEventListener('click', () => {
   initMeal();
 });
 
-// ─── PHOTO UPLOAD ─────────────────────────────────
+// ─── PHOTO UPLOAD (Google Drive 연동) ─────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiQ8WRLb2CqEZ4ANkY6rs4fotKhbnPSRUAC_Pg6i0MtWQZrhHAFAS2fro3_XefnWpO/exec';
+
 let selectedFiles = [];
-let storedPhotos  = JSON.parse(localStorage.getItem('class301_photos') || '[]');
 
 const uploadArea     = document.getElementById('uploadArea');
 const fileInput      = document.getElementById('fileInput');
@@ -164,7 +165,6 @@ uploadArea.addEventListener('drop', e => {
   handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
 });
 fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
-
 uploaderName.addEventListener('input', updateUploadBtn);
 
 function updateUploadBtn() {
@@ -209,48 +209,85 @@ previewGrid.addEventListener('click', e => {
   }
 });
 
-uploadBtn.addEventListener('click', () => {
+// ─── 업로드 버튼 클릭 → Google Drive로 전송 ───────────
+uploadBtn.addEventListener('click', async () => {
   const name = uploaderName.value.trim();
   if (!name || selectedFiles.length === 0) return;
 
-  let processed = 0;
-  selectedFiles.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      storedPhotos.push({
-        name,
-        filename: file.name,
-        dataURL: e.target.result,
-        time: new Date().toLocaleString('ko-KR')
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = '⏳ 업로드 중...';
+
+  let successCount = 0;
+
+  for (const file of selectedFiles) {
+    try {
+      const base64 = await fileToBase64(file);
+      const payload = {
+        image: base64,
+        mimeType: file.type,
+        filename: name + '_' + file.name,
+        uploader: name,
+        timestamp: new Date().toLocaleString('ko-KR')
+      };
+
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
       });
-      processed++;
-      if (processed === selectedFiles.length) {
-        localStorage.setItem('class301_photos', JSON.stringify(storedPhotos));
-        selectedFiles = [];
-        fileInput.value = '';
-        uploaderName.value = '';
-        renderPreviews();
-        updateUploadBtn();
-        renderGallery();
-        alert(`✅ ${processed}장의 사진이 업로드되었습니다!`);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+      const result = await res.json();
+      if (result.success) successCount++;
+    } catch (err) {
+      console.error('업로드 실패:', err);
+    }
+  }
+
+  selectedFiles = [];
+  fileInput.value = '';
+  uploaderName.value = '';
+  renderPreviews();
+  updateUploadBtn();
+  uploadBtn.textContent = '📤 업로드하기';
+
+  if (successCount > 0) {
+    alert(`✅ ${successCount}장이 구글 드라이브에 저장됐어요!`);
+    renderGallery();
+  } else {
+    alert('❌ 업로드에 실패했어요. 잠시 후 다시 시도해주세요.');
+    uploadBtn.disabled = false;
+  }
 });
 
-function renderGallery() {
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── 갤러리: Google Drive에서 사진 불러오기 ───────────
+async function renderGallery() {
   const area = document.getElementById('galleryArea');
-  if (storedPhotos.length === 0) {
-    area.innerHTML = '<div class="gallery-empty">아직 업로드된 사진이 없어요 🌱<br>첫 번째 사진을 올려주세요!</div>';
-    return;
-  }
-  const grid = document.createElement('div');
-  grid.className = 'gallery-grid';
-  storedPhotos.forEach(p => {
-    const item = document.createElement('div');
-    item.className = 'gallery-item';
-    item.innerHTML = `
+  area.innerHTML = '<div class="gallery-empty">📷 사진을 불러오는 중...</div>';
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    const data = await res.json();
+
+    if (!data.success || data.files.length === 0) {
+      area.innerHTML = '<div class="gallery-empty">아직 업로드된 사진이 없어요 🌱<br>첫 번째 사진을 올려주세요!</div>';
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'gallery-grid';
+
+    // 최신 순으로 정렬
+    data.files.reverse().forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      item.innerHTML = `
         <img src="${p.url}" alt="${p.name}" loading="lazy"
           onerror="this.src=''; this.parentElement.style.display='none'" />
         <div class="gallery-item-info">
@@ -259,6 +296,10 @@ function renderGallery() {
           <button class="delete-photo-btn" data-id="${p.id}">🗑️ 삭제</button>
         </div>
       `;
+      grid.appendChild(item);
+    });
+
+    area.innerHTML = '';
      grid.addEventListener('click', async e => {
       if (!e.target.classList.contains('delete-photo-btn')) return;
       if (!confirm('정말 삭제할까요?')) return;
@@ -274,41 +315,62 @@ function renderGallery() {
 
     area.innerHTML = '';  // ← 이 줄 바로 위에
     area.appendChild(grid);  // ← 이 줄 바로 위에
-    grid.appendChild(item);
-  });
-  area.innerHTML = '';
-  area.appendChild(grid);
+    area.appendChild(grid);
+
+  } catch (err) {
+    area.innerHTML = '<div class="gallery-empty">⚠️ 사진을 불러오지 못했어요.<br>잠시 후 다시 시도해주세요.</div>';
+  }
 }
 
-// ─── ZIP DOWNLOAD (선생님용) ────────────────────────
+// ─── ZIP 다운로드 (선생님용) ────────────────────────
 downloadAllBtn.addEventListener('click', async () => {
   const pw = prompt('🔒 비밀번호를 입력하세요');
   if (pw !== '523') {
     alert('비밀번호가 틀렸어요!');
     return;
   }
-  if (storedPhotos.length === 0) {
-    alert('업로드된 사진이 없습니다.');
-    return;
-  }
-  if (typeof JSZip === 'undefined') {
-    alert('JSZip 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');
-    return;
-  }
-  const zip = new JSZip();
-  const folder = zip.folder('3-1_추억사진');
+  downloadAllBtn.textContent = '⏳ 준비 중...';
+  downloadAllBtn.disabled = true;
 
-  storedPhotos.forEach((p, i) => {
-    // dataURL → base64
-    const base64 = p.dataURL.split(',')[1];
-    const ext = p.dataURL.split(';')[0].split('/')[1] || 'jpg';
-    const safeFilename = `${String(i+1).padStart(3,'0')}_${p.name}_${p.filename.replace(/[^a-zA-Z0-9가-힣._-]/g,'_')}`;
-    folder.file(safeFilename.endsWith('.'+ext) ? safeFilename : safeFilename+'.'+ext, base64, {base64:true});
-  });
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    const data = await res.json();
 
-  const blob = await zip.generateAsync({type:'blob'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '3-1_추억사진_모음.zip';
-  a.click();
+    if (!data.success || data.files.length === 0) {
+      alert('업로드된 사진이 없습니다.');
+      downloadAllBtn.textContent = '⬇️ 전체 사진 ZIP 다운로드';
+      downloadAllBtn.disabled = false;
+      return;
+    }
+
+    if (typeof JSZip === 'undefined') {
+      alert('JSZip 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder('3-6_추억사진');
+
+    for (const [i, p] of data.files.entries()) {
+      try {
+        const imgRes = await fetch(p.url);
+        const blob = await imgRes.blob();
+        const ext = blob.type.split('/')[1] || 'jpg';
+        folder.file(`${String(i+1).padStart(3,'0')}_${p.uploader}_${p.name}.${ext}`, blob);
+      } catch(e) { /* 개별 실패 무시 */ }
+    }
+
+    const zipBlob = await zip.generateAsync({type:'blob'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = '3-6_추억사진_모음.zip';
+    a.click();
+
+  } catch(err) {
+    alert('다운로드 중 오류가 발생했어요.');
+  }
+
+  downloadAllBtn.textContent = '⬇️ 전체 사진 ZIP 다운로드';
+  downloadAllBtn.disabled = false;
 });
+
