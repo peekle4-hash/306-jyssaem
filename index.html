@@ -1,127 +1,354 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>슬기로운 3학년 1반</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Poor+Story&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>슬기로운 301 생활 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  
-<div class="topbar">
-  <div class="container topbar-inner">
-    <div class="brand">
-      <a class="logo" href="index.html" aria-label="홈"><span>3-1</span></a>
-      <div class="brand-title">
-        <div class="t1">슬기로운 3학년 1반</div>
-        <div class="t2">잠실여자중학교 · 담임 이지연</div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="star">★</span>
+        <h1>슬기로운<br><span class="big-title">3-1 생활</span></h1>
+        <span class="star">★</span>
       </div>
+      <p class="subtitle">잠실여자중학교 · 2026학년도</p>
     </div>
+  </header>
 
-    <nav class="nav" aria-label="메뉴">
-      <a data-nav href="index.html">홈</a>
-      <a data-nav href="pages/attendance.html">출결</a>
-      <a data-nav href="pages/record.html">생기부</a>
-      <a data-nav href="pages/admissions.html">고입</a>
-      <a data-nav href="pages/meals.html">급식</a>
-      <a data-nav href="pages/upload.html">추억사진 업로드</a>
-      <a data-nav href="pages/rules.html">우리 반 규칙</a>
-    </nav>
+  <!-- NAV TABS -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="attendance">📋 출결 규칙</button>
+    <button class="tab" data-tab="record">📒 생기부 관리</button>
+    <button class="tab" data-tab="admission">🏫 고입 정보</button>
+    <button class="tab" data-tab="meal">🍱 급식표</button>
+    <button class="tab" data-tab="photos">📸 추억 사진</button>
+  </nav>
 
-    <button class="hamburger" data-hamburger aria-label="메뉴 열기">
-      <span class="dots"><i></i><i></i><i></i></span>
-    </button>
-  </div>
+  <!-- CONTENT SECTIONS -->
+  <main>
 
-  <div class="mobile-nav container" data-mobile-nav>
-    <a data-nav href="index.html">홈</a>
-    <a data-nav href="pages/attendance.html">출결</a>
-    <a data-nav href="pages/record.html">생기부</a>
-    <a data-nav href="pages/admissions.html">고입</a>
-    <a data-nav href="pages/meals.html">급식</a>
-    <a data-nav href="pages/upload.html">추억사진 업로드</a>
-    <a data-nav href="pages/rules.html">우리 반 규칙</a>
-  </div>
-</div>
+    <!-- ==================== 출결 탭 ==================== -->
+    <section id="tab-attendance" class="tab-content active">
 
-  <main class="container">
-    
-<section class="hero">
-  <div class="card hero-main">
-    <div class="badge">🌷 <b>2026</b> · 3학년 1반 클래스룸</div>
-    <div class="h1">필요한 건 여기서<br/>한 번에!</div>
-    <p class="sub">
-      출결·생기부·고입·급식·추억사진 업로드까지.<br/>
-      공지/서식/링크를 한 곳에 모아둔 우리 반 전용 사이트예요.
-    </p>
+      <div class="section-header yellow">
+        <span class="num">1</span>
+        <h2>8:35 등교시간 준수</h2>
+      </div>
+      <div class="card">
+        <p>🕘 <strong>8:45 이후 동교</strong> → 청소</p>
+        <p>🕘 <strong>8:50 이후 동교</strong> → 청소 + 미인정지각</p>
+        <div class="notice pink">
+          ★ 8:45 전까지 당일 지각/결석 사유 문자<br>
+          (사전 연락 X → 그대로 미인정 처리)<br>
+          - 학생 본인이 연락 X<br>
+          - 반드시 <strong>학부모님께서 직접 문자 O</strong>
+        </div>
+      </div>
 
-    <div class="chips">
-      <div class="chip">🕘 등교/결석 처리</div>
-      <div class="chip">📘 생기부 안내</div>
-      <div class="chip">🎓 고입 정보</div>
-      <div class="chip">🍱 급식 자동 불러오기</div>
-      <div class="chip">📸 사진 일괄 업로드</div>
-    </div>
+      <div class="section-header pink">
+        <span class="num">2</span>
+        <h2>① 미인정 (지각, 조퇴, 결석, 결과)</h2>
+      </div>
+      <div class="card">
+        <p>☞ 생기부 기록 + <strong class="red">고입 출결점수 감점</strong></p>
+        <p class="small">(미인정 지각/조퇴/결과 3번 = 미인정 결석 1번)</p>
+        <div class="qa-box">
+          <p class="q">Q. 미인정 결과란?</p>
+          <p class="a">A. 수업 중 15분이 넘도록 교실에 부재<br>→ 화장실, 보건실 등 교실을 비울 때엔<br>
+            <strong class="red">반드시 교과선생님께 말씀드린 후 이동!!</strong>
+          </p>
+        </div>
+      </div>
 
-    <div class="note" style="margin-top:14px">
-      <b>선생님 메모:</b> 메뉴 내용은 필요하면 언제든 수정해서 사용하세요. (Github에서 파일만 바꾸면 끝!)
-    </div>
-  </div>
+      <div class="section-header green">
+        <span class="num">3</span>
+        <h2>② 인정 (지각, 조퇴, 결석, 결과)</h2>
+      </div>
+      <div class="card">
+        <div class="sub-item">
+          <p>1) <strong>생리통</strong>: 지각/조퇴/결석/결과 중 생리통을 사유로 한 출결은 한 달에 1번만 가능.<br>
+            <span class="small">(※ 결석신고서 + 학부모 확인서 제출)</span></p>
+        </div>
+        <div class="sub-item">
+          <p>2) <strong>체험학습</strong>: 〈입주일 전〉 체험학습 신청서, 다녀온 후 체험학습 보고서 + 증빙서류<br>
+            <span class="small underline">(배경+본인+보호자 함께 나온 사진 3~4장/티켓)</span><br>
+            → 미제출 시, 미인정결석 처리<br>
+            → 반드시 볼펜으로!! 수정테이프 사용 X</p>
+        </div>
+        <div class="sub-item">
+          <p>3) <strong>코로나/독감</strong>: 결석신고서 + 검사확인서 또는 <strong class="orange">양성 확인 판정서</strong></p>
+        </div>
+        <div class="sub-item">
+          <p>4) <strong>경조사</strong>: 부모 및 조부모, 외조부모 사망(5일), 증조부모/외증조부모/형제자매/그의 배우자(3일), 부모의 형제자매 및 그의 배우자(1일)<br>
+            <span class="small">※ 사망진단서/사망확인서 + 가족관계증명서 제출</span></p>
+        </div>
+      </div>
 
-  <div class="card hero-side">
-    <img src="assets/img/cover.png" alt="슬기로운 3-1 생활 표지" />
-  </div>
-</section>
+      <div class="section-header blue">
+        <span class="num">4</span>
+        <h2>③ 질병 (지각, 조퇴, 결석, 결과)</h2>
+      </div>
+      <div class="card">
+        <p>다음 날 <strong>결석신고서 + 증빙서류</strong> 제출</p>
+        <p class="small">*증빙서류 예시: 병원진단서, 진료확인서, 처방전, 약봉투 등</p>
+        <div class="notice red-notice">
+          ★ 질병처리가 있는 경우에도 <strong>개근 X</strong>
+        </div>
+      </div>
 
-<section class="grid" aria-label="바로가기">
-  <a class="tile" href="pages/attendance.html">
-    <div class="icon">🕘</div>
-    <div class="title">출결 관련</div>
-    <p class="desc">지각/조퇴/결석/결과 기준 + 서류 안내</p>
-  </a>
-  <a class="tile" href="pages/record.html">
-    <div class="icon">📘</div>
-    <div class="title">생기부 관련</div>
-    <p class="desc">기록 항목, 독서활동, 제출 방법</p>
-  </a>
-  <a class="tile" href="pages/admissions.html">
-    <div class="icon">🎓</div>
-    <div class="title">고등학교 입시</div>
-    <p class="desc">전형 흐름, 준비 체크리스트, 참고 링크</p>
-  </a>
-  <a class="tile" href="pages/meals.html">
-    <div class="icon">🍱</div>
-    <div class="title">급식표</div>
-    <p class="desc">NEIS OpenAPI로 오늘/선택 날짜 급식 자동 조회</p>
-  </a>
-  <a class="tile" href="pages/upload.html">
-    <div class="icon">📸</div>
-    <div class="title">추억사진 업로드</div>
-    <p class="desc">여러 장 선택 → 일괄 업로드 (선생님 Drive로 자동 저장)</p>
-  </a>
-  <a class="tile" href="pages/rules.html">
-    <div class="icon">🫶</div>
-    <div class="title">우리 반 규칙</div>
-    <p class="desc">기본 생활 규칙 + 휴대전화/수업 태도</p>
-  </a>
-</section>
+      <div class="section-header purple">
+        <span class="num icon-only">📋</span>
+        <h2>체험학습 신청 규정</h2>
+      </div>
+      <div class="card">
+        <p><strong>1. 체험학습 신청 지양</strong></p>
+        <p class="small">- 입학식/개학식, 졸업식/종업식</p>
+        <p><strong>2. 체험학습 신청 불가능</strong> <span class="badge red-badge">미인정 결석 처리</span></p>
+        <p class="small">- 고사 기간(영어 듣기 평가일 포함)<br>
+          - 성적 확인 및 이의 신청 기간<br>
+          - 학교 행사일(사생대회, 백일장, 수학여행 등)</p>
+        <p><strong>3. 체험학습 가능 일수</strong></p>
+        <p class="small">- 국내 14일 이내(1학기 7일, 2학기 7일)<br>
+          - 국외 연속 10일 이내</p>
+      </div>
 
-<section class="section">
-  <h3>목차 이미지 (참고)</h3>
-  <div class="card" style="padding:12px">
-    <img src="assets/img/toc.png" alt="목차 이미지" style="width:100%; border-radius:18px; border:1px solid rgba(239,230,255,.9)" />
-    <div class="small" style="margin-top:8px">원본 자료 느낌을 살리기 위해 참고 이미지를 넣어두었어요. 필요 없으면 지워도 돼요.</div>
-  </div>
-</section>
+    </section>
 
-    <div class="footer">© <span data-year></span> 3-1 · 담임 이지연 · (학생용 안내 사이트)</div>
+    <!-- ==================== 생기부 탭 ==================== -->
+    <section id="tab-record" class="tab-content">
+
+      <div class="section-header yellow">
+        <span class="num">1</span>
+        <h2>출결상황</h2>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="att-table">
+            <thead>
+              <tr>
+                <th>학년</th>
+                <th>수업일수</th>
+                <th colspan="3">결석</th>
+                <th colspan="3">지각</th>
+                <th colspan="3">조퇴</th>
+                <th colspan="3">결과</th>
+                <th>특기사항</th>
+              </tr>
+              <tr class="sub-head">
+                <th></th><th></th>
+                <th>질병</th><th>미인정</th><th>기타</th>
+                <th>질병</th><th>미인정</th><th>기타</th>
+                <th>질병</th><th>미인정</th><th>기타</th>
+                <th>질병</th><th>미인정</th><th>기타</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>192</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>개근</td></tr>
+              <tr><td>2</td><td>191</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td></td></tr>
+              <tr><td>3</td><td>186</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>개근</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small mt">※ <strong class="red">미인정 출결</strong> ☞ 생기부 기록 + 고입 출결점수 감점 (미인정 지각/조퇴/결과 3번 = 미인정 결석 1번)</p>
+        <p class="small">※ 3년 개근 시, 졸업식날 3년 개근상 수상 <span class="red">(질병처리가 있는 경우 개근 X)</span></p>
+      </div>
+
+      <div class="section-header pink">
+        <span class="num">2</span>
+        <h2>교과학습발달상황(1) 내신 성적</h2>
+      </div>
+      <div class="card">
+        <p>교과목별 성취도(A/B/C) 및 원점수, 과목 평균, 표준편차가 기재됩니다.</p>
+        <div class="notice yellow-notice">
+          💡 수업 참여 태도와 수행평가가 내신 성적에 직접 영향을 줍니다!
+        </div>
+      </div>
+
+      <div class="section-header green">
+        <span class="num">3</span>
+        <h2>교과학습발달상황(2) 과목별 세부능력 특기사항</h2>
+      </div>
+      <div class="card">
+        <div class="example-box">
+          <p class="example-label">✏️ 예시</p>
+          <p class="example-text">영어 I: 영어 강연 영상을 보고 본인의 의견을 조리 있게 발표함. 강연 영상과 더불어 학습의 중요 요건을 동기 유발과 학습 방법에서 찾고 이 의견에 대해서 영어로 유창하게 학생들 앞에서 발표함...</p>
+        </div>
+        <p class="small mt">※ 교과 선생님이 <strong>1년 동안 교과 수업 시간에 관찰한 학생들의 특성을 서술</strong><br>
+          (수업참여 태도, 참여 내용(토론,발표,실험 등), 그 안에서 보인 학생의 노력, 과제 수행 등)</p>
+        <div class="notice pink-notice">
+          💡 단순히 교과성적만으로는 알 수 없는 내용들을 작성 가능!!<br>
+          → '정성평가'가 메인이 되는 '생기부 평가'에서 더욱 중요해지고 있음.
+        </div>
+      </div>
+
+      <div class="section-header blue">
+        <span class="num">4</span>
+        <h2>독서활동 상황기록</h2>
+      </div>
+      <div class="card">
+        <div class="notice orange-notice">
+          📚 독서기록 양식 다운로드: 학교 홈페이지 → '열린마당' → '각종 서식자료'
+        </div>
+        <p class="small mt">※ '독서 활동 기록'(독후감)을 작성해서 <strong>담임교사 또는 관련 교과교사에게 제출</strong><br>
+          → 해당 교사가 생기부의 [독서활동 상황기록] 내용란에 <strong>책의 제목과 저자</strong> 입력<br>
+          &nbsp;&nbsp;&nbsp;(돌려받은 후에는, 본인의 <strong>독서 포트폴리오</strong>로 잘 보관)</p>
+        <p class="small">※ 담임선생님께 제출 시, 과목 또는 영역이 '공통'으로 기재, 교과선생님께 제출 시엔 해당 교과로 기재</p>
+      </div>
+
+      <div class="section-header purple">
+        <span class="num">5</span>
+        <h2>행동특성 및 종합의견</h2>
+      </div>
+      <div class="card">
+        <p>※ 담임교사가 <strong>1년 동안 각 학생을 관찰한 내용을 바탕으로 학생에 대한 종합의견을 서술</strong><br>
+          (ex: 인성, 행동, 학교생활, 학업 태도, 학업 역량, 리더십 등)</p>
+        <div class="notice green-notice">
+          💡 학생에 대한 종합 평가가 이 항목을 통해 판단되기에 [행동특성 및 종합의견]의 중요성이 커짐
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== 고입 정보 탭 ==================== -->
+    <section id="tab-admission" class="tab-content">
+
+      <div class="section-header yellow">
+        <span class="num icon-only">🏫</span>
+        <h2>고등학교 입시 정보</h2>
+      </div>
+
+      <div class="card admission-intro">
+        <p>고등학교 진학을 준비하는 3학년 여러분! 아래 추천 사이트와 채널을 통해 다양한 정보를 미리미리 확인하세요 🎉</p>
+      </div>
+
+      <div class="admission-cards">
+
+        <div class="adm-card yellow-card">
+          <div class="adm-icon">🏛️</div>
+          <h3>고입정보포털</h3>
+          <p>고등학교 유형별 정보 (일반고, 자율고, 특목고, 특성화고 등) 한눈에 확인!</p>
+          <a href="https://www.hischool.go.kr" target="_blank" class="adm-btn yellow-btn">사이트 바로가기 →</a>
+        </div>
+
+        <div class="adm-card pink-card">
+          <div class="adm-icon">💼</div>
+          <h3>하이잡 (Hi-Job)</h3>
+          <p>특성화고 정보 전문 포털. 직업계 고등학교 탐색부터 취업 정보까지!</p>
+          <a href="https://www.hifive.go.kr" target="_blank" class="adm-btn pink-btn">사이트 바로가기 →</a>
+        </div>
+
+        <div class="adm-card green-card">
+          <div class="adm-icon">💬</div>
+          <h3>서울시교육청 학생배정</h3>
+          <p>카카오톡 채널 추가 후 고교 배정 관련 최신 소식을 실시간으로 받아보세요!</p>
+          <a href="https://pf.kakao.com/_xaxmkxb" target="_blank" class="adm-btn green-btn">카카오톡 채널 추가 →</a>
+        </div>
+
+      </div>
+
+      <div class="section-header pink mt-section">
+        <span class="num icon-only">📅</span>
+        <h2>고입 주요 일정 (참고)</h2>
+      </div>
+      <div class="card">
+        <div class="timeline">
+          <div class="tl-item"><span class="tl-dot yellow-dot"></span><div><strong>3월~6월</strong> – 고등학교 유형 탐색 및 입학 설명회 참석</div></div>
+          <div class="tl-item"><span class="tl-dot pink-dot"></span><div><strong>7월~8월</strong> – 특목고/특성화고 원서 접수 시작</div></div>
+          <div class="tl-item"><span class="tl-dot green-dot"></span><div><strong>9월~10월</strong> – 자기소개서 작성 및 면접 준비</div></div>
+          <div class="tl-item"><span class="tl-dot blue-dot"></span><div><strong>11월~12월</strong> – 원서 접수 및 면접</div></div>
+          <div class="tl-item"><span class="tl-dot purple-dot"></span><div><strong>1월~2월</strong> – 합격 발표 및 일반고 배정</div></div>
+        </div>
+        <p class="small mt">※ 일정은 변경될 수 있으니 고입정보포털에서 최신 정보를 확인하세요!</p>
+      </div>
+
+    </section>
+
+    <!-- ==================== 급식표 탭 ==================== -->
+    <section id="tab-meal" class="tab-content">
+
+      <div class="section-header yellow">
+        <span class="num icon-only">🍱</span>
+        <h2>이번 주 급식표</h2>
+      </div>
+
+      <div class="meal-controls">
+        <button id="prevWeek" class="week-btn">◀ 이전 주</button>
+        <span id="weekLabel" class="week-label">불러오는 중...</span>
+        <button id="nextWeek" class="week-btn">다음 주 ▶</button>
+      </div>
+
+      <div id="mealGrid" class="meal-grid">
+        <div class="meal-loading">🍽️ 급식 정보를 불러오는 중...</div>
+      </div>
+
+      <div class="card mt-section">
+        <p class="small">📌 급식 정보는 <strong>NEIS 학교급식 오픈API</strong>를 통해 잠실여자중학교의 실제 급식 데이터를 불러옵니다.<br>
+        정보가 없는 경우 해당 날짜에 급식이 없거나 정보가 미등록된 경우입니다.</p>
+      </div>
+
+    </section>
+
+    <!-- ==================== 추억 사진 탭 ==================== -->
+    <section id="tab-photos" class="tab-content">
+
+      <div class="section-header yellow">
+        <span class="num icon-only">📸</span>
+        <h2>졸업앨범 추억 사진 업로드</h2>
+      </div>
+
+      <div class="card upload-intro">
+        <p>🌸 우리 반의 소중한 추억을 담아주세요!<br>
+          여러 장을 한 번에 선택해서 업로드할 수 있어요.</p>
+      </div>
+
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📷</div>
+        <p class="upload-text">사진을 여기에 드래그하거나<br><strong>클릭해서 선택</strong>하세요</p>
+        <p class="upload-hint">JPG, PNG, HEIC 파일 / 여러 장 동시 선택 가능</p>
+        <input type="file" id="fileInput" accept="image/*" multiple hidden />
+      </div>
+
+      <div class="upload-form">
+        <input type="text" id="uploaderName" placeholder="이름 또는 별명을 입력하세요 (예: 김민지)" class="name-input" />
+        <button id="uploadBtn" class="upload-submit-btn" disabled>📤 업로드하기</button>
+      </div>
+
+      <div id="previewArea" class="preview-area hidden">
+        <h3 class="preview-title">선택된 사진 미리보기</h3>
+        <div id="previewGrid" class="preview-grid"></div>
+      </div>
+
+      <div class="section-header pink mt-section">
+        <span class="num icon-only">🖼️</span>
+        <h2>업로드된 사진 모아보기</h2>
+      </div>
+
+      <div class="teacher-controls">
+        <p class="small teacher-hint">👩‍🏫 선생님 전용: 업로드된 사진을 ZIP 파일로 일괄 다운로드할 수 있습니다.</p>
+        <button id="downloadAllBtn" class="download-all-btn">⬇️ 전체 사진 ZIP 다운로드</button>
+      </div>
+
+      <div id="galleryArea" class="gallery-area">
+        <div class="gallery-empty">아직 업로드된 사진이 없어요 🌱<br>첫 번째 사진을 올려주세요!</div>
+      </div>
+
+    </section>
+
   </main>
 
-  <script src="assets/js/common.js"></script>
+  <footer>
+    <p>🌸 잠실여자중학교 3학년 1반 · 2026학년도 🌸</p>
+    <p class="small">함께해서 더 빛나는 우리 반 ✨</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
