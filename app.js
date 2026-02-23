@@ -15,7 +15,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 });
 
 // ─── MEAL (급식표) ────────────────────────────────
-const NEIS_API_KEY = 'sample';   // 교육부 NEIS 오픈API 키 (demo용 – sample key 사용)
+const NEIS_API_KEY = '2f65735895ac4ee0a8f8d78f7b3067d1';   // 교육부 NEIS 오픈API 키 (demo용 – sample key 사용)
 // 잠실여자중학교: ATPT_OFCDC_SC_CODE = 'B10', SD_SCHUL_CODE = '7130093'
 const SCHOOL_CODE  = '7130093';
 const OFFICE_CODE  = 'B10';
