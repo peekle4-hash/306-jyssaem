@@ -251,12 +251,29 @@ function renderGallery() {
     const item = document.createElement('div');
     item.className = 'gallery-item';
     item.innerHTML = `
-      <img src="${p.dataURL}" alt="${p.filename}" />
-      <div class="gallery-item-info">
-        <div class="gallery-uploader">📸 ${p.name}</div>
-        <div class="gallery-time">${p.time}</div>
-      </div>
-    `;
+        <img src="${p.url}" alt="${p.name}" loading="lazy"
+          onerror="this.src=''; this.parentElement.style.display='none'" />
+        <div class="gallery-item-info">
+          <div class="gallery-uploader">📸 ${p.uploader}</div>
+          <div class="gallery-time">${p.timestamp}</div>
+          <button class="delete-photo-btn" data-id="${p.id}">🗑️ 삭제</button>
+        </div>
+      `;
+     grid.addEventListener('click', async e => {
+      if (!e.target.classList.contains('delete-photo-btn')) return;
+      if (!confirm('정말 삭제할까요?')) return;
+      const fileId = e.target.dataset.id;
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', fileId })
+      });
+      const result = await res.json();
+      if (result.success) { alert('삭제됐어요!'); renderGallery(); }
+      else alert('삭제 실패했어요.');
+    });
+
+    area.innerHTML = '';  // ← 이 줄 바로 위에
+    area.appendChild(grid);  // ← 이 줄 바로 위에
     grid.appendChild(item);
   });
   area.innerHTML = '';
@@ -265,6 +282,11 @@ function renderGallery() {
 
 // ─── ZIP DOWNLOAD (선생님용) ────────────────────────
 downloadAllBtn.addEventListener('click', async () => {
+  const pw = prompt('🔒 비밀번호를 입력하세요');
+  if (pw !== '523') {
+    alert('비밀번호가 틀렸어요!');
+    return;
+  }
   if (storedPhotos.length === 0) {
     alert('업로드된 사진이 없습니다.');
     return;
