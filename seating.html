@@ -4,11 +4,550 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>좌석표 (5,5,4,4)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root{
+      --bg:#f7f7fb;
+      --card:#ffffff;
+      --line:#e6e7ee;
+      --text:#1f2330;
+      --muted:#6b7280;
+      --chip:#f1f5ff;
+      --chipLine:#c9d6ff;
+      --seat:#ffffff;
+      --seatHover:#f6fff6;
+      --seatLine:#d9dde8;
+      --warnBg:#fff7ed;
+      --warnLine:#fdba74;
+      --okBg:#effdf2;
+      --okLine:#86efac;
+      --dangerBg:#fff1f2;
+      --dangerLine:#fda4af;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:18px;
+      font-family: "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+      background:var(--bg); color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .topbar{
+      max-width:1040px; margin:0 auto 12px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+    }
+    .back{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px; border-radius:12px;
+      background:#fff; border:1px solid var(--line);
+      font-weight:900;
+    }
+    .wrap{
+      max-width: 1040px; margin:0 auto;
+      display:grid; gap:14px;
+      grid-template-columns: 330px 1fr;
+    }
+    .panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+    }
+    h1{font-size:18px; margin:0 0 10px}
+    .hint{font-size:12px; color:var(--muted); margin:0 0 10px; line-height:1.4}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    button{
+      border:1px solid var(--line);
+      background:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:900;
+      font-family: inherit;
+    }
+    button:hover{filter:brightness(.98)}
+    .dangerBtn{border-color:#ffd3d3}
+    .primaryBtn{border-color:#c7d2fe; background:#eef2ff}
+    .names{
+      display:flex; flex-wrap:wrap; gap:8px;
+      padding:10px;
+      border:1px dashed var(--line);
+      border-radius:12px;
+      min-height: 110px;
+      background:#fafafe;
+    }
+    .chip{
+      user-select:none;
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--chipLine);
+      background:var(--chip);
+      font-weight:900;
+      cursor:grab;
+      white-space:nowrap;
+    }
+    .chip:active{cursor:grabbing}
+    .chip.dragging{opacity:.5}
+
+    .stage{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+    }
+    .stageHead{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .meta{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .meta input{
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px 12px;
+      font-weight:900;
+      min-width: 180px;
+      background:#fff;
+      font-family: inherit;
+    }
+
+    .statusBox{
+      margin: 0 0 10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+    }
+    .statusRow{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      font-size:13px;
+      font-weight:900;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-size:12px;
+      font-weight:900;
+    }
+    .pill.ok{background:var(--okBg); border-color:var(--okLine)}
+    .pill.warn{background:var(--warnBg); border-color:var(--warnLine)}
+    .pill.danger{background:var(--dangerBg); border-color:var(--dangerLine)}
+    .details{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+      word-break:keep-all;
+    }
+
+    .boardWrap{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fbfbff;
+      padding:14px;
+    }
+    .frontLabel{
+      text-align:center;
+      font-weight:900;
+      letter-spacing:.2px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .row{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin: 10px 0;
+    }
+    .seat{
+      width: 124px;
+      height: 70px;
+      background:var(--seat);
+      border:1.5px solid var(--seatLine);
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 8px 8px;
+      position:relative;
+    }
+    .seat.over{
+      background:var(--seatHover);
+      outline:2px solid #b7f0b7;
+      outline-offset:2px;
+    }
+
+    .seatNum{
+      position:absolute;
+      top:6px;
+      left:8px;
+      font-size:11px;
+      font-weight:900;
+      color:#8b94a7;
+      background:#f3f4f6;
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      padding:2px 6px;
+      line-height:1;
+    }
+
+    .seat[data-filled="false"]::after{
+      content:"드롭";
+      position:absolute;
+      bottom:6px;
+      right:8px;
+      font-size:11px;
+      color:#a0a7b6;
+      font-weight:900;
+    }
+    .seat .chip{
+      width:100%;
+      justify-content:center;
+      cursor:pointer;
+    }
+
+    .desk{
+      margin-top:14px;
+      background: #0b1020;
+      color:#fff;
+      border-radius:14px;
+      padding:14px;
+      text-align:center;
+      font-weight:900;
+      letter-spacing:1px;
+    }
+    .small{font-size:12px; color:var(--muted); margin-top:8px}
+    @media (max-width: 920px){
+      .wrap{grid-template-columns: 1fr}
+      .seat{width: 96px; height:66px}
+      .meta input{min-width: 150px}
+    }
+  </style>
 </head>
 <body>
-<h2>좌석표 페이지가 정상 추가되었습니다.</h2>
-<p>이 파일은 자동 생성된 seating.html 입니다.</p>
-<p>기존 안내에 따라 전체 코드로 교체 가능합니다.</p>
+  <div class="topbar">
+    <a class="back" href="index.html">⬅️ 홈으로</a>
+    <div style="font-weight:900; color:var(--muted);">교탁은 맨 아래</div>
+  </div>
+
+  <div class="wrap">
+    <section class="panel">
+      <h1>학생 이름표</h1>
+      <p class="hint">
+        이름표를 <b>좌석칸</b>으로 끌어놓기<br>
+        좌석에 들어간 이름표는 <b>클릭</b>하면 목록으로 복귀
+      </p>
+
+      <div id="namePool" class="names" aria-label="학생 이름표 목록"></div>
+
+      <div class="toolbar">
+        <button id="resetBtn" class="dangerBtn">전체 초기화</button>
+      </div>
+
+      <p class="small">※ 가나다순 / 좌석번호 1~18 자동</p>
+    </section>
+
+    <section class="stage">
+      <div class="stageHead">
+        <div style="min-width:260px;">
+          <h1 style="margin:0 0 8px;">좌석표 (5,5,4,4)</h1>
+          <div class="meta">
+            <input id="titleInput" placeholder="예: 3-6 (2차자리)" />
+            <input id="dateInput" placeholder="예: 2026-03-05" />
+          </div>
+        </div>
+        <div class="toolbar" style="margin:0;">
+          <button id="saveBtn" class="primaryBtn">PNG 저장</button>
+          <button id="uploadBtn">구글폼 업로드</button>
+        </div>
+      </div>
+
+      <div id="statusBox" class="statusBox">
+        <div class="statusRow" id="statusRow"></div>
+        <div class="details" id="statusDetails"></div>
+      </div>
+
+      <div id="captureArea" class="boardWrap">
+        <div class="frontLabel">칠판/앞쪽 (화면 상단)</div>
+        <div id="seatBoard"></div>
+        <div class="desk">교탁 (맨 아래)</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // (1) 구글폼 응답 링크 넣기 (파일 업로드 질문 포함된 폼)
+    const GOOGLE_FORM_URL = "여기에_구글폼_응답링크_붙여넣기";
+
+    // 학생 목록(가나다순 정렬됨)
+    const students = [
+      "김지후","노지승","공소연","양지민","오시은","우성아","우지민",
+      "유정인","윤채영","이연수","이윤아","이지우","정채윤","조수연",
+      "최민지","최수빈","황세인","황유민"
+    ];
+
+    // 좌석배열: 위에서부터 5,5,4,4 (총 18)
+    const seatRows = [5,5,4,4];
+
+    const namePool = document.getElementById('namePool');
+    const seatBoard = document.getElementById('seatBoard');
+    const resetBtn = document.getElementById('resetBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    const statusRow = document.getElementById('statusRow');
+    const statusDetails = document.getElementById('statusDetails');
+
+    let dragName = null;
+
+    function koSort(a,b){ return a.localeCompare(b,'ko'); }
+
+    function makeChip(name){
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = name;
+      chip.draggable = true;
+
+      chip.addEventListener('dragstart', (e) => {
+        dragName = name;
+        chip.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', name);
+      });
+      chip.addEventListener('dragend', () => {
+        chip.classList.remove('dragging');
+      });
+
+      return chip;
+    }
+
+    function renderNamePool(names){
+      namePool.innerHTML = '';
+      names.forEach(n => namePool.appendChild(makeChip(n)));
+
+      namePool.addEventListener('dragover', (e)=>e.preventDefault());
+      namePool.addEventListener('drop', (e)=>{
+        e.preventDefault();
+        const name = e.dataTransfer.getData('text/plain') || dragName;
+        if(!name) return;
+        removeFromSeats(name);
+        addToPoolIfMissing(name);
+        updateStatus();
+      });
+    }
+
+    function buildSeats(){
+      seatBoard.innerHTML = '';
+      let seatNum = 1;
+
+      seatRows.forEach((count, rIdx) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.dataset.row = rIdx;
+
+        for(let i=0;i<count;i++){
+          const seat = document.createElement('div');
+          seat.className = 'seat';
+          seat.dataset.filled = "false";
+          seat.dataset.seatId = `${rIdx}-${i}`;
+          seat.dataset.seatNum = String(seatNum);
+
+          const badge = document.createElement('div');
+          badge.className = 'seatNum';
+          badge.textContent = seatNum;
+          seat.appendChild(badge);
+
+          seat.addEventListener('dragover', (e)=>{
+            e.preventDefault();
+            seat.classList.add('over');
+          });
+          seat.addEventListener('dragleave', ()=>{
+            seat.classList.remove('over');
+          });
+          seat.addEventListener('drop', (e)=>{
+            e.preventDefault();
+            seat.classList.remove('over');
+
+            const name = e.dataTransfer.getData('text/plain') || dragName;
+            if(!name) return;
+
+            removeFromSeats(name);
+
+            const existing = seat.querySelector('.chip');
+            if(existing){
+              const exName = existing.textContent.trim();
+              existing.remove();
+              seat.dataset.filled = "false";
+              addToPoolIfMissing(exName);
+            }
+
+            const chip = makeChip(name);
+
+            chip.addEventListener('click', ()=>{
+              chip.remove();
+              seat.dataset.filled = "false";
+              addToPoolIfMissing(name);
+              updateStatus();
+            });
+
+            seat.appendChild(chip);
+            seat.dataset.filled = "true";
+
+            removeFromPool(name);
+            updateStatus();
+          });
+
+          row.appendChild(seat);
+          seatNum++;
+        }
+        seatBoard.appendChild(row);
+      });
+    }
+
+    function removeFromPool(name){
+      const chips = [...namePool.querySelectorAll('.chip')];
+      const target = chips.find(c => c.textContent.trim() === name);
+      if(target) target.remove();
+    }
+
+    function addToPoolIfMissing(name){
+      const chips = [...namePool.querySelectorAll('.chip')].map(c=>c.textContent.trim());
+      if(chips.includes(name)) return;
+      const all = chips.concat([name]).sort(koSort);
+      renderNamePool(all);
+    }
+
+    function removeFromSeats(name){
+      const seats = [...document.querySelectorAll('.seat')];
+      seats.forEach(seat=>{
+        const chip = seat.querySelector('.chip');
+        if(chip && chip.textContent.trim() === name){
+          chip.remove();
+          seat.dataset.filled = "false";
+        }
+      });
+    }
+
+    function resetAll(){
+      const seats = [...document.querySelectorAll('.seat')];
+      seats.forEach(seat=>{
+        const badge = seat.querySelector('.seatNum');
+        seat.innerHTML = '';
+        seat.appendChild(badge);
+        seat.dataset.filled = "false";
+      });
+      renderNamePool([...students].sort(koSort));
+      updateStatus();
+    }
+
+    function getPlacedNames(){
+      const seats = [...document.querySelectorAll('.seat')];
+      const placed = [];
+      seats.forEach(seat=>{
+        const chip = seat.querySelector('.chip');
+        if(chip) placed.push(chip.textContent.trim());
+      });
+      return placed;
+    }
+
+    function updateStatus(){
+      const placed = getPlacedNames();
+      const placedCount = placed.length;
+      const total = students.length;
+
+      const unplaced = [...namePool.querySelectorAll('.chip')].map(c=>c.textContent.trim()).sort(koSort);
+
+      const freq = new Map();
+      placed.forEach(n => freq.set(n, (freq.get(n)||0)+1));
+      const duplicates = [...freq.entries()].filter(([_,v])=>v>1).map(([k,v])=>`${k}(${v})`).sort(koSort);
+
+      statusRow.innerHTML = '';
+
+      const pill1 = document.createElement('span');
+      pill1.className = 'pill ok';
+      pill1.textContent = `배치: ${placedCount}/${total}`;
+      statusRow.appendChild(pill1);
+
+      const pill2 = document.createElement('span');
+      pill2.className = unplaced.length ? 'pill warn' : 'pill ok';
+      pill2.textContent = `미배치: ${unplaced.length}`;
+      statusRow.appendChild(pill2);
+
+      const pill3 = document.createElement('span');
+      pill3.className = duplicates.length ? 'pill danger' : 'pill ok';
+      pill3.textContent = `중복: ${duplicates.length}`;
+      statusRow.appendChild(pill3);
+
+      const lines = [];
+      if(unplaced.length) lines.push(`미배치: ${unplaced.join(', ')}`);
+      if(duplicates.length) lines.push(`중복: ${duplicates.join(', ')}`);
+      if(!unplaced.length && !duplicates.length) lines.push('✅ 중복/미배치 없음');
+      statusDetails.textContent = lines.join(' / ');
+    }
+
+    // 파일명 강제: 반_날짜_버전.png  (예: 3-6_2026-03-05_2차자리.png)
+    async function savePNG(){
+      const cap = document.getElementById('captureArea');
+
+      const rawTitle = document.getElementById('titleInput').value.trim();
+      const rawDate  = document.getElementById('dateInput').value.trim();
+
+      const className = rawTitle || "3-6";
+      const today = new Date();
+      const autoDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const date = rawDate || autoDate;
+
+      let version = "";
+      const match = className.match(/\((.*?)\)/);
+      if(match){
+        version = match[1].replace(/\s/g,'');
+      } else {
+        version = "자리배치";
+      }
+      const cleanClass = className.replace(/\(.*?\)/,'').trim();
+
+      const fileName = `${cleanClass}_${date}_${version}.png`.replace(/[\\/:*?"<>|]/g,'_');
+
+      const temp = document.createElement('div');
+      temp.style.textAlign = "center";
+      temp.style.fontWeight = "900";
+      temp.style.marginBottom = "10px";
+      temp.style.padding = "10px";
+      temp.style.border = "1px solid #ddd";
+      temp.style.borderRadius = "12px";
+      temp.style.background = "#fff";
+      temp.textContent = `${cleanClass} | ${date} | ${version}`;
+
+      cap.prepend(temp);
+      const canvas = await html2canvas(cap, {scale: 2});
+      temp.remove();
+
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function openGoogleForm(){
+      if(!GOOGLE_FORM_URL || GOOGLE_FORM_URL.includes("여기에_")){
+        alert("GOOGLE_FORM_URL에 구글폼 링크를 먼저 붙여넣어줘!");
+        return;
+      }
+      alert("1) 'PNG 저장'으로 파일 저장\n2) 열린 구글폼에서 파일 업로드하면 끝!");
+      window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
+    }
+
+    resetBtn.addEventListener('click', resetAll);
+    saveBtn.addEventListener('click', savePNG);
+    uploadBtn.addEventListener('click', openGoogleForm);
+
+    buildSeats();
+    renderNamePool([...students].sort(koSort));
+    updateStatus();
+  </script>
 </body>
 </html>
