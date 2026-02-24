@@ -36,8 +36,8 @@
     <button class="tab" data-tab="admission">🏫 고입 정보</button>
     <button class="tab" data-tab="meal">🍱 급식표</button>
     <button class="tab" data-tab="photos">📸 추억 사진</button>
-      <a href="seating.html" class="tab">🪑 좌석표</a>
-</nav>
+    <button class="tab" data-tab="seating">🪑 자리 배치</button>
+  </nav>
 
   <!-- CONTENT SECTIONS -->
   <main>
@@ -375,6 +375,46 @@
 
     </section>
 
+    <!-- ==================== 자리 배치 탭 ==================== -->
+    <section id="tab-seating" class="tab-content">
+
+      <div class="section-header green" style="margin-top:0;">
+        <span class="num icon-only">🪑</span>
+        <h2>자리 배치표 – 3학년 6반</h2>
+      </div>
+
+      <!-- 상단 이름표 팔레트 -->
+      <div class="seating-status-bar" id="seatingStatus">
+        배치 현황: <span id="statPlaced">0</span>/18명 배치 &nbsp;|&nbsp;
+        미배치: <span id="statUnplaced">18</span>명 &nbsp;
+        <span id="statWarn" class="stat-warn hidden"></span>
+      </div>
+
+      <div class="name-palette-wrap">
+        <div class="name-palette-title">📋 학생 이름표 (드래그하여 자리에 배치)</div>
+        <div id="namePalette" class="name-palette"></div>
+      </div>
+
+      <!-- PNG 저장 버튼 & 파일명 설정 -->
+      <div class="seating-save-row">
+        <input type="text" id="saveFilename" class="save-filename-input" placeholder="파일명 (예: 3-6_2차자리)" />
+        <button id="savePngBtn" class="save-png-btn">📷 PNG로 저장</button>
+        <span class="save-hint">날짜 미입력 시 오늘 날짜 자동 추가 · 저장명: 3-6_YYYY-MM-DD_파일명.png</span>
+      </div>
+
+      <!-- 좌석 그리드 (캡처 대상) -->
+      <div id="seatingCapture">
+        <div class="classroom-label">3학년 6반 자리 배치표</div>
+
+        <div id="seatsGrid" class="seats-grid"></div>
+
+        <div class="podium-wrap">
+          <div class="podium">🏫 교탁</div>
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
   <footer>
@@ -383,6 +423,7 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

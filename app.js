@@ -339,3 +339,156 @@ downloadAllBtn.addEventListener('click', () => {
   }
   window.open('https://drive.google.com/drive/folders/1j1UZ0NUcm16x5ZZct9NuNzMJyAxhhOHA?usp=sharing', '_blank');
 });
+
+// ─── SEATING (자리 배치) ──────────────────────────
+
+const STUDENTS = [
+  '공소연','김지후','노지승','양지민','오시은',
+  '우성아','우지민','윤채영','이연수','이윤아',
+  '이지우','유정인','정채윤','조수연','최민지',
+  '최수빈','황세인','황유민'
+].sort((a,b) => a.localeCompare(b,'ko'));
+
+// 5,5,4,4 배열 → 총 18석
+const ROW_LAYOUT = [5, 5, 4, 4];
+
+let seatData = {}; // seatIndex -> studentName
+
+function initSeating() {
+  buildSeats();
+  buildPalette();
+  updateStatus();
+}
+
+function buildSeats() {
+  const grid = document.getElementById('seatsGrid');
+  grid.innerHTML = '';
+  let seatNum = 1;
+  ROW_LAYOUT.forEach((cols, rowIdx) => {
+    const row = document.createElement('div');
+    row.className = 'seat-row';
+    for (let c = 0; c < cols; c++) {
+      const idx = seatNum;
+      const desk = document.createElement('div');
+      desk.className = 'desk';
+      desk.dataset.seat = idx;
+      desk.innerHTML = `<span class="seat-num">${idx}</span><div class="desk-name" id="deskName${idx}"></div>`;
+      desk.addEventListener('dragover', e => { e.preventDefault(); desk.classList.add('drag-over'); });
+      desk.addEventListener('dragleave', () => desk.classList.remove('drag-over'));
+      desk.addEventListener('drop', e => {
+        e.preventDefault();
+        desk.classList.remove('drag-over');
+        const name = e.dataTransfer.getData('text/plain');
+        const fromSeat = e.dataTransfer.getData('from-seat');
+        if (!name) return;
+        // Remove from previous seat if dragged from another desk
+        if (fromSeat) {
+          delete seatData[parseInt(fromSeat)];
+          renderSeat(parseInt(fromSeat));
+        }
+        seatData[idx] = name;
+        renderSeat(idx);
+        buildPalette();
+        updateStatus();
+      });
+      grid.appendChild(desk);
+      seatNum++;
+    }
+  });
+}
+
+function renderSeat(idx) {
+  const el = document.getElementById('deskName' + idx);
+  if (!el) return;
+  const name = seatData[idx];
+  const desk = el.closest('.desk');
+  if (name) {
+    el.textContent = name;
+    desk.classList.add('occupied');
+    // click to return to palette
+    desk.onclick = () => {
+      delete seatData[idx];
+      renderSeat(idx);
+      buildPalette();
+      updateStatus();
+    };
+  } else {
+    el.textContent = '';
+    desk.classList.remove('occupied');
+    desk.onclick = null;
+  }
+}
+
+function buildPalette() {
+  const palette = document.getElementById('namePalette');
+  palette.innerHTML = '';
+  const placed = new Set(Object.values(seatData));
+  STUDENTS.forEach(name => {
+    if (placed.has(name)) return;
+    const tag = document.createElement('div');
+    tag.className = 'name-tag';
+    tag.textContent = name;
+    tag.draggable = true;
+    tag.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', name);
+      e.dataTransfer.setData('from-seat', '');
+    });
+    palette.appendChild(tag);
+  });
+
+  // Also make placed desks draggable (re-arrange)
+  Object.entries(seatData).forEach(([seatIdx, name]) => {
+    const deskEl = document.querySelector(`.desk[data-seat="${seatIdx}"]`);
+    if (!deskEl) return;
+    deskEl.draggable = true;
+    deskEl.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', name);
+      e.dataTransfer.setData('from-seat', seatIdx);
+    });
+  });
+}
+
+function updateStatus() {
+  const placed = Object.values(seatData).length;
+  const unplaced = STUDENTS.length - placed;
+  document.getElementById('statPlaced').textContent = placed;
+  document.getElementById('statUnplaced').textContent = unplaced;
+
+  // Check duplicates
+  const values = Object.values(seatData);
+  const dupes = values.filter((v,i) => values.indexOf(v) !== i);
+  const warnEl = document.getElementById('statWarn');
+  if (dupes.length > 0) {
+    warnEl.textContent = `⚠️ 중복 배치: ${[...new Set(dupes)].join(', ')}`;
+    warnEl.classList.remove('hidden');
+  } else {
+    warnEl.classList.add('hidden');
+  }
+}
+
+// PNG 저장
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('savePngBtn').addEventListener('click', async () => {
+    const input = document.getElementById('saveFilename').value.trim();
+    const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+    const suffix = input || '자리배치';
+    const filename = `3-6_${today}_${suffix}.png`;
+
+    const target = document.getElementById('seatingCapture');
+    const canvas = await html2canvas(target, { backgroundColor: '#ffffff', scale: 2 });
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+});
+
+// Tab init hook
+const origTabHandler = document.querySelectorAll('.tab');
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'seating') {
+      setTimeout(initSeating, 50);
+    }
+  });
+});
