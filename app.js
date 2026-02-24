@@ -415,7 +415,7 @@ function renderSeat(idx) {
   const name = seatData[idx];
   const desk = el.closest('.desk');
   if (name) {
-    el.textContent = name;
+    el.innerHTML = `<span class="name-num">${idx}.</span>${name}`;
     desk.classList.add('occupied');
     desk.onclick = () => {
       delete seatData[idx];
@@ -424,7 +424,7 @@ function renderSeat(idx) {
       updateStatus();
     };
   } else {
-    el.textContent = '';
+    el.innerHTML = '';
     desk.classList.remove('occupied');
     desk.onclick = null;
   }
@@ -571,6 +571,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().slice(0,10);
     const suffix = input || '자리배치';
     const filename = `3-6_${today}_${suffix}.png`;
+
+    // 라벨 업데이트
+    const label = document.getElementById('classroomLabel');
+    if (label) label.textContent = `3-6 | ${today} | ${suffix}`;
 
     const target = document.getElementById('seatingCapture');
     const canvas = await html2canvas(target, { backgroundColor: '#ffffff', scale: 2 });
