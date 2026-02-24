@@ -27,6 +27,7 @@
       border:1px solid var(--chipLine);background:var(--chip);
       font-weight:800;cursor:grab;white-space:nowrap;
       touch-action:none;-webkit-touch-callout:none;
+      min-width:0;
     }
     .chip:active{cursor:grabbing;}
     .chip.dragging{opacity:.4;}
@@ -185,22 +186,47 @@
     }
     .m-palette .chip{font-size:13px;padding:7px 12px;}
 
-    /* 좌석 영역: 남은 공간 전부, 내부 스크롤 */
+    /* 좌석 영역: 남은 공간 전부, 세로만 스크롤 */
     .m-seats{
-      flex:1 1 0;overflow:auto;
+      flex:1 1 0;
+      overflow-x:hidden;
+      overflow-y:auto;
       -webkit-overflow-scrolling:touch;
-      padding:10px;background:var(--bg);
-      touch-action:pan-x pan-y; /* 평소엔 스크롤 */
+      padding:8px;background:var(--bg);
+      touch-action:pan-y;
     }
-    /* 드래그 중에는 스크롤 차단 */
     .m-seats.locking{overflow:hidden;touch-action:none;}
 
     .m-boardWrap{
       background:#fff;border:1px solid var(--line);
-      border-radius:14px;padding:12px 10px;
+      border-radius:14px;
+      padding:10px 6px 12px;
+      width:100%;
     }
-    .m-seat{width:108px;height:50px;}
-    .m-seat .chip{font-size:13px;}
+
+    /* 4열이 항상 화면 안에 꽉 맞도록: 각 열이 flex:1로 균등 분배 */
+    .m-boardWrap .cols{
+      gap:6px;
+      flex-wrap:nowrap;
+      width:100%;
+      justify-content:stretch;
+    }
+    .m-boardWrap .col{ gap:8px; flex:1 1 0; min-width:0; }
+
+    .m-seat{
+      width:100%;
+      min-width:0;
+      height:52px;
+    }
+    .m-seat[data-filled="false"]::after{ display:none; }
+    .m-seat .chip{
+      font-size:clamp(11px, 3.2vw, 14px);
+      padding:5px 4px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
   </style>
 </head>
 <body>
