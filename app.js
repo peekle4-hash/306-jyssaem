@@ -15,8 +15,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 });
 
 // ─── MEAL (급식표) ────────────────────────────────
-const NEIS_API_KEY = '2f65735895ac4ee0a8f8d78f7b3067d1';   // 교육부 NEIS 오픈API 키 (demo용 – sample key 사용)
-// 잠실여자중학교: ATPT_OFCDC_SC_CODE = 'B10', SD_SCHUL_CODE = '7130093'
+const NEIS_API_KEY = '2f65735895ac4ee0a8f8d78f7b3067d1';
 const SCHOOL_CODE  = '7130093';
 const OFFICE_CODE  = 'B10';
 
@@ -47,7 +46,6 @@ function getWeekDates(monday) {
 }
 
 async function fetchMeal(fromDate, toDate) {
-  // NEIS 오픈API 급식식단정보
   const url = `https://open.neis.go.kr/hub/mealServiceDietInfo`
     + `?KEY=${NEIS_API_KEY}&Type=json&pIndex=1&pSize=100`
     + `&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}`
@@ -59,9 +57,7 @@ async function fetchMeal(fromDate, toDate) {
     if (json.mealServiceDietInfo) {
       return json.mealServiceDietInfo[1].row;
     }
-  } catch(e) {
-    // network or CORS – fallback handled below
-  }
+  } catch(e) {}
   return null;
 }
 
@@ -77,12 +73,9 @@ async function initMeal() {
 
   const mon = week[0], fri = week[4];
   label.textContent = `${formatDate(mon,'.')} ~ ${formatDate(fri,'.')}`;
-
   grid.innerHTML = '<div class="meal-loading">🍽️ 급식 정보를 불러오는 중...</div>';
 
   const rows = await fetchMeal(fromDate, toDate);
-
-  // map date → items
   const mealMap = {};
   if (rows) {
     rows.forEach(r => {
@@ -155,7 +148,6 @@ const previewArea    = document.getElementById('previewArea');
 const previewGrid    = document.getElementById('previewGrid');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 
-// Click & drag-drop
 uploadArea.addEventListener('click', () => fileInput.click());
 uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
@@ -229,7 +221,6 @@ uploadBtn.addEventListener('click', async () => {
         uploader: name,
         timestamp: new Date().toLocaleString('ko-KR')
       };
-
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -283,7 +274,6 @@ async function renderGallery() {
     const grid = document.createElement('div');
     grid.className = 'gallery-grid';
 
-    // 최신 순으로 정렬
     data.files.reverse().forEach(p => {
       const item = document.createElement('div');
       item.className = 'gallery-item';
@@ -299,22 +289,40 @@ async function renderGallery() {
       grid.appendChild(item);
     });
 
-    area.innerHTML = '';
-     grid.addEventListener('click', async e => {
+    // ─── 삭제 버튼 ───────────────────────────────────
+    grid.addEventListener('click', async e => {
       if (!e.target.classList.contains('delete-photo-btn')) return;
       if (!confirm('정말 삭제할까요?')) return;
       const fileId = e.target.dataset.id;
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'delete', fileId })
-      });
-      const result = await res.json();
-      if (result.success) { alert('삭제됐어요!'); renderGallery(); }
-      else alert('삭제 실패했어요.');
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'delete', fileId })
+        });
+        const result = await res.json();
+        if (result.success) { alert('삭제됐어요!'); renderGallery(); }
+        else alert('삭제 실패했어요.');
+      } catch(err) {
+        alert('삭제 중 오류가 발생했어요.');
+      }
     });
 
-    area.innerHTML = '';  // ← 이 줄 바로 위에
-    area.appendChild(grid);  // ← 이 줄 바로 위에
+    // ─── 라이트박스 (클릭하면 크게 보기) ─────────────
+    grid.querySelectorAll('img').forEach(img => {
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+        const bigImg = document.createElement('img');
+        bigImg.src = img.src;
+        bigImg.style.cssText = 'max-width:90%;max-height:90vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+        overlay.appendChild(bigImg);
+        overlay.addEventListener('click', () => overlay.remove());
+        document.body.appendChild(overlay);
+      });
+    });
+
+    area.innerHTML = '';
     area.appendChild(grid);
 
   } catch (err) {
@@ -322,55 +330,12 @@ async function renderGallery() {
   }
 }
 
-// ─── ZIP 다운로드 (선생님용) ────────────────────────
-downloadAllBtn.addEventListener('click', async () => {
+// ─── 전체 다운로드 버튼 (선생님용, 비밀번호 523) ──────
+downloadAllBtn.addEventListener('click', () => {
   const pw = prompt('🔒 비밀번호를 입력하세요');
   if (pw !== '523') {
     alert('비밀번호가 틀렸어요!');
     return;
   }
-  downloadAllBtn.textContent = '⏳ 준비 중...';
-  downloadAllBtn.disabled = true;
-
-  try {
-    const res = await fetch(APPS_SCRIPT_URL);
-    const data = await res.json();
-
-    if (!data.success || data.files.length === 0) {
-      alert('업로드된 사진이 없습니다.');
-      downloadAllBtn.textContent = '⬇️ 전체 사진 ZIP 다운로드';
-      downloadAllBtn.disabled = false;
-      return;
-    }
-
-    if (typeof JSZip === 'undefined') {
-      alert('JSZip 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');
-      return;
-    }
-
-    const zip = new JSZip();
-    const folder = zip.folder('3-6_추억사진');
-
-    for (const [i, p] of data.files.entries()) {
-      try {
-        const imgRes = await fetch(p.url);
-        const blob = await imgRes.blob();
-        const ext = blob.type.split('/')[1] || 'jpg';
-        folder.file(`${String(i+1).padStart(3,'0')}_${p.uploader}_${p.name}.${ext}`, blob);
-      } catch(e) { /* 개별 실패 무시 */ }
-    }
-
-    const zipBlob = await zip.generateAsync({type:'blob'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = '3-6_추억사진_모음.zip';
-    a.click();
-
-  } catch(err) {
-    alert('다운로드 중 오류가 발생했어요.');
-  }
-
-  downloadAllBtn.textContent = '⬇️ 전체 사진 ZIP 다운로드';
-  downloadAllBtn.disabled = false;
+  window.open('https://drive.google.com/drive/folders/1j1UZ0NUcm16x5ZZct9NuNzMJyAxhhOHA?usp=sharing', '_blank');
 });
-
