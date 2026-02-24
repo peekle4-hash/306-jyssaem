@@ -349,10 +349,15 @@ const STUDENTS = [
   '최수빈','황세인','황유민'
 ].sort((a,b) => a.localeCompare(b,'ko'));
 
-// 5,5,4,4 배열 → 총 18석
-const ROW_LAYOUT = [5, 5, 4, 4];
+// 열(column) 기준 5,5,4,4 → 왼쪽부터 4개 열, 각 열의 행 수
+// 열1=5행, 열2=5행, 열3=4행, 열4=4행  → 총 18석
+// 번호: 위→아래, 왼→오 순으로 1~18
+const COL_LAYOUT = [5, 5, 4, 4]; // 각 열의 행(자리 수)
+// 자리 번호 매핑: col0 → 1~5, col1 → 6~10, col2 → 11~14, col3 → 15~18
+// 실제 번호는 위→아래, 왼→오 순으로 그리드 순서에 따라 매김
 
-let seatData = {}; // seatIndex -> studentName
+let seatData = {}; // seatIndex(1-based) -> studentName
+let dragState = null; // 현재 드래그 중인 정보 {name, fromSeat, ghost, originEl}
 
 function initSeating() {
   buildSeats();
@@ -360,19 +365,26 @@ function initSeating() {
   updateStatus();
 }
 
+// 자리 번호를 열/행 기준으로 계산
+// 열 우선이 아니라 "위→아래, 왼→오" 순 번호를 원하므로
+// 최대 행 수(maxRows=5)를 기준으로 grid 순서 계산
 function buildSeats() {
   const grid = document.getElementById('seatsGrid');
   grid.innerHTML = '';
+  // COL_LAYOUT = [5,5,4,4] → 그리드를 열 기준 flexbox로 구성
+  // 각 열을 column div로 만들고 그 안에 desk 넣기
+  // 번호 순서: 열1 상단부터 1,2,3,4,5 → 열2 6,7,8,9,10 → 열3 11,12,13,14 → 열4 15,16,17,18
   let seatNum = 1;
-  ROW_LAYOUT.forEach((cols, rowIdx) => {
-    const row = document.createElement('div');
-    row.className = 'seat-row';
-    for (let c = 0; c < cols; c++) {
+  COL_LAYOUT.forEach((rows, colIdx) => {
+    const col = document.createElement('div');
+    col.className = 'seat-col';
+    for (let r = 0; r < rows; r++) {
       const idx = seatNum;
       const desk = document.createElement('div');
       desk.className = 'desk';
       desk.dataset.seat = idx;
       desk.innerHTML = `<span class="seat-num">${idx}</span><div class="desk-name" id="deskName${idx}"></div>`;
+      // Desktop drag events
       desk.addEventListener('dragover', e => { e.preventDefault(); desk.classList.add('drag-over'); });
       desk.addEventListener('dragleave', () => desk.classList.remove('drag-over'));
       desk.addEventListener('drop', e => {
@@ -381,7 +393,6 @@ function buildSeats() {
         const name = e.dataTransfer.getData('text/plain');
         const fromSeat = e.dataTransfer.getData('from-seat');
         if (!name) return;
-        // Remove from previous seat if dragged from another desk
         if (fromSeat) {
           delete seatData[parseInt(fromSeat)];
           renderSeat(parseInt(fromSeat));
@@ -391,9 +402,10 @@ function buildSeats() {
         buildPalette();
         updateStatus();
       });
-      grid.appendChild(desk);
+      col.appendChild(desk);
       seatNum++;
     }
+    grid.appendChild(col);
   });
 }
 
@@ -405,7 +417,6 @@ function renderSeat(idx) {
   if (name) {
     el.textContent = name;
     desk.classList.add('occupied');
-    // click to return to palette
     desk.onclick = () => {
       delete seatData[idx];
       renderSeat(idx);
@@ -423,29 +434,117 @@ function buildPalette() {
   const palette = document.getElementById('namePalette');
   palette.innerHTML = '';
   const placed = new Set(Object.values(seatData));
+
   STUDENTS.forEach(name => {
     if (placed.has(name)) return;
     const tag = document.createElement('div');
     tag.className = 'name-tag';
     tag.textContent = name;
     tag.draggable = true;
+    // Desktop
     tag.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', name);
       e.dataTransfer.setData('from-seat', '');
     });
+    // Mobile touch
+    addTouchDrag(tag, name, null);
     palette.appendChild(tag);
   });
 
-  // Also make placed desks draggable (re-arrange)
+  // Placed desks also draggable
   Object.entries(seatData).forEach(([seatIdx, name]) => {
     const deskEl = document.querySelector(`.desk[data-seat="${seatIdx}"]`);
     if (!deskEl) return;
     deskEl.draggable = true;
+    // Remove old listeners by cloning — but we only bind dragstart so re-add
     deskEl.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', name);
       e.dataTransfer.setData('from-seat', seatIdx);
     });
+    addTouchDrag(deskEl, name, seatIdx);
   });
+}
+
+// ── 모바일 터치 드래그 ──────────────────────────────
+function addTouchDrag(el, name, fromSeat) {
+  let ghost = null;
+  let longPressTimer = null;
+  let isDragging = false;
+  let startX, startY;
+
+  el.addEventListener('touchstart', e => {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    isDragging = false;
+
+    longPressTimer = setTimeout(() => {
+      isDragging = true;
+      // 글씨 선택 방지
+      e.preventDefault();
+      // 고스트 생성
+      ghost = document.createElement('div');
+      ghost.className = 'drag-ghost';
+      ghost.textContent = name;
+      ghost.style.left = (touch.clientX - 36) + 'px';
+      ghost.style.top  = (touch.clientY - 20) + 'px';
+      document.body.appendChild(ghost);
+      el.classList.add('dragging-source');
+    }, 180);
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - startX);
+    const dy = Math.abs(touch.clientY - startY);
+    // 움직임이 감지되면 롱프레스 취소 (스크롤로 인식)
+    if (!isDragging && (dx > 6 || dy > 6)) {
+      clearTimeout(longPressTimer);
+      return;
+    }
+    if (!isDragging) return;
+    e.preventDefault();
+    ghost.style.left = (touch.clientX - 36) + 'px';
+    ghost.style.top  = (touch.clientY - 20) + 'px';
+    // 드롭 타겟 하이라이트
+    ghost.style.pointerEvents = 'none';
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    document.querySelectorAll('.desk').forEach(d => d.classList.remove('drag-over'));
+    const deskTarget = target && target.closest('.desk');
+    if (deskTarget) deskTarget.classList.add('drag-over');
+  }, { passive: false });
+
+  el.addEventListener('touchend', e => {
+    clearTimeout(longPressTimer);
+    document.querySelectorAll('.desk').forEach(d => d.classList.remove('drag-over'));
+    el.classList.remove('dragging-source');
+    if (!isDragging) { ghost && ghost.remove(); return; }
+    isDragging = false;
+    const touch = e.changedTouches[0];
+    if (ghost) { ghost.remove(); ghost = null; }
+
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    const deskTarget = target && target.closest('.desk');
+    if (deskTarget) {
+      const toSeat = parseInt(deskTarget.dataset.seat);
+      if (fromSeat) {
+        delete seatData[parseInt(fromSeat)];
+        renderSeat(parseInt(fromSeat));
+      }
+      seatData[toSeat] = name;
+      renderSeat(toSeat);
+      buildPalette();
+      updateStatus();
+    }
+  }, { passive: true });
+
+  el.addEventListener('touchcancel', () => {
+    clearTimeout(longPressTimer);
+    isDragging = false;
+    el.classList.remove('dragging-source');
+    if (ghost) { ghost.remove(); ghost = null; }
+    document.querySelectorAll('.desk').forEach(d => d.classList.remove('drag-over'));
+  }, { passive: true });
 }
 
 function updateStatus() {
@@ -454,7 +553,6 @@ function updateStatus() {
   document.getElementById('statPlaced').textContent = placed;
   document.getElementById('statUnplaced').textContent = unplaced;
 
-  // Check duplicates
   const values = Object.values(seatData);
   const dupes = values.filter((v,i) => values.indexOf(v) !== i);
   const warnEl = document.getElementById('statWarn');
@@ -470,7 +568,7 @@ function updateStatus() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('savePngBtn').addEventListener('click', async () => {
     const input = document.getElementById('saveFilename').value.trim();
-    const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+    const today = new Date().toISOString().slice(0,10);
     const suffix = input || '자리배치';
     const filename = `3-6_${today}_${suffix}.png`;
 
@@ -484,7 +582,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Tab init hook
-const origTabHandler = document.querySelectorAll('.tab');
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.tab === 'seating') {

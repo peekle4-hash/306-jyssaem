@@ -497,10 +497,16 @@ footer p { font-weight: 700; color: #888; margin-bottom: 4px; }
 }
 .seats-grid {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
+  flex-direction: row;
+  gap: 10px;
+  justify-content: center;
+  align-items: flex-start;
   margin-bottom: 18px;
+}
+.seat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .seat-row {
   display: flex;
@@ -602,4 +608,32 @@ footer p { font-weight: 700; color: #888; margin-bottom: 4px; }
 .save-hint {
   font-size: 0.78rem;
   color: #6b7280;
+}
+
+/* ─── 모바일 터치 드래그 고스트 ─── */
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  pointer-events: none;
+  opacity: 0.88;
+  box-shadow: 0 4px 16px rgba(79,70,229,0.35);
+  white-space: nowrap;
+  transform: rotate(-3deg);
+  transition: none;
+}
+.dragging-source {
+  opacity: 0.35;
+}
+/* 텍스트 선택 방지 */
+.name-tag, .desk {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
