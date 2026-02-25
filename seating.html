@@ -301,11 +301,21 @@
     .group-card.gc2{border-color:#a7f3d0;}
     .group-card.gc3{border-color:#fecaca;}
 
+    .m-seat-wrap{
+      display:flex;flex-direction:column;
+      flex:1 1 0;overflow:hidden;
+    }
+    .m-seat-wrap .m-seats{ flex:1 1 0; }
+
     /* 모둠 모드 숨김 */
     .seat-mode-content{display:block;}
     .group-mode-content{display:none;}
     body.group-mode .seat-mode-content{display:none;}
     body.group-mode .group-mode-content{display:block;}
+    @media(max-width:760px){
+      .m-seat-wrap.seat-mode-content{display:flex;flex-direction:column;}
+      body.group-mode .group-mode-content{display:flex;flex-direction:column;flex:1 1 0;overflow-y:auto;}
+    }
   </style>
 </head>
 <body>
@@ -336,7 +346,6 @@
         <button id="pcExamBtn" class="primaryBtn">📝 시험 대형 배치</button>
         <button id="pcGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;">👥 모둠 구성</button>
         <button id="pcSaveBtn" class="primaryBtn">PNG 저장</button>
-        <button id="pcUploadBtn">구글폼 업로드</button>
       </div>
     </div>
     <div class="statusBox">
@@ -387,7 +396,7 @@
   <div class="m-details"   id="mDetails"></div>
 
   <!-- 모바일 좌석 모드 -->
-  <div class="seat-mode-content" style="display:contents;">
+  <div class="seat-mode-content m-seat-wrap">
     <div class="m-palette">
       <div class="m-palette-label">📋 이름표를 아래 자리로 끌어다 놓으세요</div>
       <div id="mPool" class="names"></div>
@@ -401,7 +410,7 @@
   </div>
 
   <!-- 모바일 모둠 모드 -->
-  <div class="group-mode-content" style="flex:1;overflow-y:auto;padding:8px;background:var(--bg);">
+  <div class="group-mode-content" style="padding:8px;background:var(--bg);">
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <button id="mRandomGroupBtn" style="flex:1;border-color:#d1fae5;background:#ecfdf5;font-size:13px;">🎲 랜덤 배정</button>
       <button id="mClearGroupBtn" class="dangerBtn" style="flex:1;font-size:13px;">전체 초기화</button>
@@ -502,15 +511,8 @@ function syncPool(pool, onDown){
 function updateStatus(){
   const placed  = [...seatMap.values()].filter(Boolean);
   const unplaced = sorted.filter(n=>!placed.includes(n));
-  const freq = new Map();
-  placed.forEach(n=>freq.set(n,(freq.get(n)||0)+1));
-  const dupes = [...freq.entries()].filter(([,v])=>v>1).map(([k,v])=>`${disp(k)}(${v})`);
 
-  const line = [];
-  if(unplaced.length) line.push(`미배치: ${unplaced.map(disp).join(', ')}`);
-  if(dupes.length)    line.push(`중복: ${dupes.join(', ')}`);
-  if(!line.length)    line.push('✅ 중복/미배치 없음');
-  const summary = line.join(' / ');
+  const summary = unplaced.length ? `미배치: ${unplaced.map(disp).join(', ')}` : '✅ 미배치 없음';
 
   // PC
   const pr = document.getElementById('pcStatusRow');
@@ -519,7 +521,6 @@ function updateStatus(){
     pr.innerHTML = '';
     [[`배치: ${placed.length}/${students.length}`,'ok'],
      [`미배치: ${unplaced.length}`, unplaced.length?'warn':'ok'],
-     [`중복: ${dupes.length}`, dupes.length?'danger':'ok']
     ].forEach(([t,c])=>{ const p=document.createElement('span'); p.className=`pill ${c}`; p.textContent=t; pr.appendChild(p); });
     pd.textContent = summary;
   }
@@ -530,7 +531,6 @@ function updateStatus(){
     mb.innerHTML = '';
     [[`배치 ${placed.length}/${students.length}`,'ok'],
      [`미배치 ${unplaced.length}`, unplaced.length?'warn':'ok'],
-     [`중복 ${dupes.length}`, dupes.length?'danger':'ok']
     ].forEach(([t,c])=>{ const p=document.createElement('span'); p.className=`pill ${c}`; p.textContent=t; mb.appendChild(p); });
     md.textContent = summary;
   }
@@ -965,11 +965,6 @@ document.getElementById('pcResetBtn').addEventListener('click', resetAll);
 document.getElementById('pcExamBtn').addEventListener('click', examSeating);
 document.getElementById('pcGroupBtn').addEventListener('click', ()=>{ setGroupMode(true); fullGroupSync(); });
 document.getElementById('pcSaveBtn').addEventListener('click',  savePNG);
-document.getElementById('pcUploadBtn').addEventListener('click',()=>{
-  if(!GOOGLE_FORM_URL||GOOGLE_FORM_URL.includes('여기에_')){ alert('구글폼 URL을 먼저 설정하세요.'); return; }
-  alert('1) PNG 저장 → 2) 구글폼에 업로드');
-  window.open(GOOGLE_FORM_URL,'_blank');
-});
 document.getElementById('pcRandomGroupBtn').addEventListener('click', randomGroup);
 document.getElementById('pcClearGroupBtn').addEventListener('click', clearGroups);
 
