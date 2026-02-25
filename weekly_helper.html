@@ -229,9 +229,24 @@ const COL_LAYOUT = [5,5,4,4];
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
-    if(zone && zoneCapacityOk(zone)){
-      if(zone.id === 'studentPool') insertToPoolSorted(draggingEl);
-      else zone.appendChild(draggingEl);
+    if(zone){
+      const fromZone = draggingEl.parentElement;
+      if(zone.id === 'studentPool'){
+        insertToPoolSorted(draggingEl);
+      } else if(zoneCapacityOk(zone)){
+        zone.appendChild(draggingEl);
+      } else {
+        // 드롭존이 꽉 찬 경우 → 기존 칩과 스왑
+        const existingChip = zone.querySelector('.chip');
+        if(existingChip && fromZone){
+          if(fromZone.id === 'studentPool'){
+            insertToPoolSorted(existingChip);
+          } else {
+            fromZone.appendChild(existingChip);
+          }
+          zone.appendChild(draggingEl);
+        }
+      }
     }
     draggingEl = null;
     removeGhost();
