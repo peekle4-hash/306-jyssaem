@@ -44,10 +44,15 @@
       content:"드롭";position:absolute;bottom:5px;right:9px;
       font-size:10px;color:#c0c7d4;font-weight:800;
     }
+    .seat-no{
+      position:absolute;top:5px;left:9px;
+      font-size:10px;color:#b0b8cc;font-weight:900;
+      line-height:1;pointer-events:none;
+    }
     .seat .chip{width:100%;justify-content:center;cursor:pointer;border:none;background:#eff6ff;}
     .seat .chip:hover{background:#fee2e2;}
 
-    .cols{display:flex;justify-content:center;gap:10px;align-items:flex-start;margin:6px 0;}
+    .cols{display:flex;justify-content:center;gap:10px;align-items:flex-end;margin:6px 0;}
     .col{display:flex;flex-direction:column;gap:10px;}
 
     .pill{
@@ -210,6 +215,7 @@
       flex-wrap:nowrap;
       width:100%;
       justify-content:stretch;
+      align-items:flex-end;
     }
     .m-boardWrap .col{ gap:8px; flex:1 1 0; min-width:0; }
 
@@ -219,6 +225,7 @@
       height:52px;
     }
     .m-seat[data-filled="false"]::after{ display:none; }
+    .m-seat .seat-no{ font-size:9px; }
     .m-seat .chip{
       font-size:clamp(11px, 3.2vw, 14px);
       padding:5px 4px;
@@ -227,6 +234,78 @@
       text-overflow:ellipsis;
       max-width:100%;
     }
+
+    /* ══ 모드 전환 탭 ══ */
+    .mode-tabs{
+      display:flex;gap:0;margin-bottom:14px;
+      border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    }
+    .mode-tab{
+      flex:1;padding:10px;text-align:center;cursor:pointer;
+      font-weight:800;font-size:14px;background:#fff;
+      border:none;border-radius:0;transition:background .15s,color .15s;
+    }
+    .mode-tab.active{background:#0b1020;color:#fff;}
+    .mode-tab:first-child{border-right:1px solid var(--line);}
+
+    /* ══ 모둠 그리드 ══ */
+    .group-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-bottom:10px;
+    }
+    .group-card{
+      border:2px solid var(--line);border-radius:14px;
+      background:#fff;overflow:hidden;
+    }
+    .group-header{
+      padding:8px 14px;font-weight:900;font-size:14px;
+      display:flex;align-items:center;justify-content:space-between;
+      color:#fff;
+    }
+    .group-header .g-count{font-size:12px;opacity:.8;font-weight:700;}
+    .group-slots{
+      padding:10px;display:flex;flex-direction:column;gap:8px;
+      min-height:100px;
+    }
+    .g-slot{
+      background:#f7f8fc;border:1.5px dashed #d1d5e8;
+      border-radius:999px;height:46px;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;touch-action:none;
+      transition:background .12s,border-color .12s;
+    }
+    .g-slot.over{background:#f0fff4;border-color:#86efac;border-style:solid;}
+    .g-slot[data-filled="true"]{border-style:solid;border-color:#c9d6ff;background:#fff;}
+    .g-slot[data-filled="false"]::after{
+      content:"드롭";font-size:10px;color:#c0c7d4;font-weight:800;
+    }
+    .g-slot .chip{width:100%;justify-content:center;border:none;}
+    .g-slot .chip:hover{background:#fee2e2;}
+
+    .group-pool-wrap{
+      border:1px solid var(--line);border-radius:12px;
+      background:#fafafe;padding:10px;
+    }
+    .group-pool-label{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px;}
+    .group-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:50px;}
+
+    /* 모둠 색상 */
+    .gc0{background:linear-gradient(135deg,#6366f1,#4f46e5);}
+    .gc1{background:linear-gradient(135deg,#f59e0b,#d97706);}
+    .gc2{background:linear-gradient(135deg,#10b981,#059669);}
+    .gc3{background:linear-gradient(135deg,#ef4444,#dc2626);}
+    .group-card.gc0{border-color:#c7d2fe;}
+    .group-card.gc1{border-color:#fde68a;}
+    .group-card.gc2{border-color:#a7f3d0;}
+    .group-card.gc3{border-color:#fecaca;}
+
+    /* 모둠 모드 숨김 */
+    .seat-mode-content{display:block;}
+    .group-mode-content{display:none;}
+    body.group-mode .seat-mode-content{display:none;}
+    body.group-mode .group-mode-content{display:block;}
   </style>
 </head>
 <body>
@@ -254,6 +333,8 @@
         </div>
       </div>
       <div class="toolbar" style="margin:0;">
+        <button id="pcExamBtn" class="primaryBtn">📝 시험 대형 배치</button>
+        <button id="pcGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;">👥 모둠 구성</button>
         <button id="pcSaveBtn" class="primaryBtn">PNG 저장</button>
         <button id="pcUploadBtn">구글폼 업로드</button>
       </div>
@@ -262,9 +343,31 @@
       <div class="statusRow" id="pcStatusRow"></div>
       <div class="details"   id="pcStatusDets"></div>
     </div>
-    <div id="pcCapture" class="boardWrap">
-      <div id="pcBoard"></div>
-      <div class="desk-bar">교탁 (맨 아래)</div>
+
+    <!-- 좌석 배치 모드 -->
+    <div class="seat-mode-content">
+      <div id="pcCapture" class="boardWrap">
+        <div id="pcBoard"></div>
+        <div class="desk-bar">교탁</div>
+      </div>
+    </div>
+
+    <!-- 모둠 구성 모드 -->
+    <div class="group-mode-content">
+      <div id="pcGroupCapture" class="boardWrap" style="padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <span style="font-weight:900;font-size:15px;">👥 모둠 구성</span>
+          <div style="display:flex;gap:8px;">
+            <button id="pcRandomGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;font-size:13px;padding:7px 12px;">🎲 랜덤 배정</button>
+            <button id="pcClearGroupBtn" class="dangerBtn" style="font-size:13px;padding:7px 12px;">전체 초기화</button>
+          </div>
+        </div>
+        <div class="group-grid" id="pcGroupGrid"></div>
+        <div class="group-pool-wrap">
+          <div class="group-pool-label">📋 미배정 학생 — 모둠으로 끌어다 놓으세요</div>
+          <div class="group-pool" id="pcGroupPool"></div>
+        </div>
+      </div>
     </div>
   </section>
 </div>
@@ -275,19 +378,38 @@
     <h2>🪑 3-6 자리배치</h2>
     <div class="m-topbar-btns">
       <button id="mResetBtn" class="dangerBtn">초기화</button>
+      <button id="mExamBtn"  class="primaryBtn">📝 시험배치</button>
+      <button id="mGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;font-size:12px;padding:8px 10px;border-radius:8px;">👥 모둠</button>
       <button id="mSaveBtn"  class="primaryBtn">💾 PNG</button>
     </div>
   </div>
   <div class="m-statusbar" id="mStatusBar"></div>
   <div class="m-details"   id="mDetails"></div>
-  <div class="m-palette">
-    <div class="m-palette-label">📋 이름표를 아래 자리로 끌어다 놓으세요</div>
-    <div id="mPool" class="names"></div>
+
+  <!-- 모바일 좌석 모드 -->
+  <div class="seat-mode-content" style="display:contents;">
+    <div class="m-palette">
+      <div class="m-palette-label">📋 이름표를 아래 자리로 끌어다 놓으세요</div>
+      <div id="mPool" class="names"></div>
+    </div>
+    <div class="m-seats" id="mSeats">
+      <div class="m-boardWrap" id="mCapture">
+        <div id="mBoard"></div>
+        <div class="desk-bar">교탁</div>
+      </div>
+    </div>
   </div>
-  <div class="m-seats" id="mSeats">
-    <div class="m-boardWrap" id="mCapture">
-      <div id="mBoard"></div>
-      <div class="desk-bar">교탁 (맨 아래)</div>
+
+  <!-- 모바일 모둠 모드 -->
+  <div class="group-mode-content" style="flex:1;overflow-y:auto;padding:8px;background:var(--bg);">
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button id="mRandomGroupBtn" style="flex:1;border-color:#d1fae5;background:#ecfdf5;font-size:13px;">🎲 랜덤 배정</button>
+      <button id="mClearGroupBtn" class="dangerBtn" style="flex:1;font-size:13px;">전체 초기화</button>
+    </div>
+    <div class="group-grid" id="mGroupGrid" style="grid-template-columns:1fr 1fr;gap:10px;"></div>
+    <div class="group-pool-wrap" style="margin-top:10px;">
+      <div class="group-pool-label">📋 미배정 학생</div>
+      <div class="group-pool" id="mGroupPool"></div>
     </div>
   </div>
 </div>
@@ -330,13 +452,18 @@ function buildGrid(container, seatClass, onChipDown){
   container.innerHTML = '';
   const wrap = document.createElement('div');
   wrap.className = 'cols';
+  // 각 열의 시작 번호 계산 (누적 합)
+  const colOffset = COL_LAYOUT.reduce((acc, cnt, i) => { acc[i] = (acc[i-1]||0) + (COL_LAYOUT[i-1]||0); return acc; }, []);
   COL_LAYOUT.forEach((cnt,c)=>{
     const col = document.createElement('div');
     col.className = 'col';
     for(let r=0;r<cnt;r++){
+      // 맨 아래(r=cnt-1)가 colOffset[c]+1, 위로 갈수록 +1
+      const seatNo = colOffset[c] + (cnt - r);
       const seat = document.createElement('div');
       seat.className = `seat ${seatClass}`;
       seat.dataset.seatId = `${c}-${r}`;
+      seat.dataset.seatNo = seatNo;
       seat.dataset.filled = 'false';
       col.appendChild(seat);
     }
@@ -351,6 +478,11 @@ function syncGrid(container, seatClass, onChipDown){
     const seat = container.querySelector(`[data-seat-id="${id}"]`);
     if(!seat) return;
     seat.innerHTML = '';
+    // 번호 표시
+    const noEl = document.createElement('span');
+    noEl.className = 'seat-no';
+    noEl.textContent = seat.dataset.seatNo;
+    seat.appendChild(noEl);
     if(name){
       seat.dataset.filled = 'true';
       seat.appendChild(chip(name, onChipDown));
@@ -427,6 +559,28 @@ function resetAll(){
   fullSync();
 }
 
+// 시험 대형: 학생 번호 = 책상 번호로 자동 배치
+function examSeating(){
+  // seatId → seatNo 매핑 먼저 구축 (buildGrid 호출 전이므로 직접 계산)
+  seatMap.forEach((_,k)=>seatMap.set(k,null));
+  const colOffset = COL_LAYOUT.reduce((acc, cnt, i) => { acc[i] = (acc[i-1]||0) + (COL_LAYOUT[i-1]||0); return acc; }, []);
+  // seatNo → seatId 역매핑
+  const noToId = new Map();
+  COL_LAYOUT.forEach((cnt,c)=>{
+    for(let r=0;r<cnt;r++){
+      const seatNo = colOffset[c] + (cnt - r);
+      noToId.set(seatNo, `${c}-${r}`);
+    }
+  });
+  // 학생 번호(numOf) 기준으로 배치
+  sorted.forEach(name=>{
+    const no = numOf.get(name);
+    const seatId = noToId.get(no);
+    if(seatId !== undefined) seatMap.set(seatId, name);
+  });
+  fullSync();
+}
+
 /* ══════════════════════════════
    드래그 공통 로직
 ══════════════════════════════ */
@@ -468,7 +622,18 @@ function startDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, onCommi
     const el = document.elementFromPoint(cx, cy);
     const seat = el?.closest?.('.seat');
     if(seat){
-      placeName(name, seat.dataset.seatId);
+      const targetId = seat.dataset.seatId;
+      const targetName = seatMap.get(targetId); // 타겟 자리에 있는 학생
+      // 드래그한 학생의 원래 자리 찾기
+      let sourceSeatId = null;
+      seatMap.forEach((v,k)=>{ if(v===name) sourceSeatId=k; });
+      if(targetName && sourceSeatId){
+        // 둘 다 자리에 있으면 스왑
+        seatMap.set(sourceSeatId, targetName);
+        seatMap.set(targetId, name);
+      } else {
+        placeName(name, targetId);
+      }
       onCommit();
     } else if(el?.closest?.(`#${poolEl}`)){
       removeName(name);
@@ -578,16 +743,248 @@ async function savePNG(){
   a.download = fname; a.href = canvas.toDataURL('image/png'); a.click();
 }
 
+/* ══════════════════════════════
+   모둠 구성 모드
+══════════════════════════════ */
+const GROUP_NAMES = ['1모둠','2모둠','3모둠','4모둠'];
+const GROUP_COLORS = ['gc0','gc1','gc2','gc3'];
+const GROUP_MAX = 5; // 모둠당 최대 인원
+// groupMap: 모둠번호(0~3) → [이름, ...]
+const groupMap = [[], [], [], []];
+
+let isGroupMode = false;
+
+function setGroupMode(on){
+  isGroupMode = on;
+  document.body.classList.toggle('group-mode', on);
+}
+
+/* ── 모둠 칩 생성 ── */
+function gChip(name, onDown){
+  const el = document.createElement('div');
+  el.className = 'chip';
+  el.textContent = disp(name);
+  el.dataset.raw = name;
+  el.addEventListener('pointerdown', onDown);
+  return el;
+}
+
+/* ── 모둠 그리드 렌더링 ── */
+function buildGroupGrid(gridEl, poolEl, isMobile){
+  gridEl.innerHTML = '';
+  GROUP_NAMES.forEach((gname, gi)=>{
+    const card = document.createElement('div');
+    card.className = `group-card ${GROUP_COLORS[gi]}`;
+
+    const header = document.createElement('div');
+    header.className = `group-header ${GROUP_COLORS[gi]}`;
+    header.innerHTML = `<span>${gname}</span><span class="g-count">${groupMap[gi].length}명</span>`;
+    card.appendChild(header);
+
+    const slots = document.createElement('div');
+    slots.className = 'group-slots';
+    slots.dataset.groupIdx = gi;
+
+    // 슬롯 수 = max(현재인원, GROUP_MAX) 단, 최소 GROUP_MAX
+    const slotCount = Math.max(GROUP_MAX, groupMap[gi].length);
+    for(let s=0; s<slotCount; s++){
+      const slot = document.createElement('div');
+      slot.className = 'g-slot';
+      slot.dataset.groupIdx = gi;
+      slot.dataset.slotIdx = s;
+      const member = groupMap[gi][s];
+      if(member){
+        slot.dataset.filled = 'true';
+        slot.appendChild(gChip(member, isMobile ? makeGMDown : makeGPCDown));
+      } else {
+        slot.dataset.filled = 'false';
+      }
+      slots.appendChild(slot);
+    }
+    card.appendChild(slots);
+    gridEl.appendChild(card);
+  });
+}
+
+function syncGroupPool(poolEl, isMobile){
+  const placed = new Set(groupMap.flat());
+  poolEl.innerHTML = '';
+  sorted.filter(n=>!placed.has(n)).forEach(n=>{
+    poolEl.appendChild(gChip(n, isMobile ? makeGMDown : makeGPCDown));
+  });
+}
+
+function fullGroupSync(){
+  buildGroupGrid(document.getElementById('pcGroupGrid'), document.getElementById('pcGroupPool'), false);
+  syncGroupPool(document.getElementById('pcGroupPool'), false);
+  buildGroupGrid(document.getElementById('mGroupGrid'), document.getElementById('mGroupPool'), true);
+  syncGroupPool(document.getElementById('mGroupPool'), true);
+}
+
+/* ── 모둠에 배치 ── */
+function placeInGroup(name, toGroupIdx){
+  // 기존 모둠에서 제거
+  groupMap.forEach(g=>{ const i=g.indexOf(name); if(i>-1) g.splice(i,1); });
+  groupMap[toGroupIdx].push(name);
+}
+function removeFromGroup(name){
+  groupMap.forEach(g=>{ const i=g.indexOf(name); if(i>-1) g.splice(i,1); });
+}
+
+/* ── 랜덤 배정 ── */
+function randomGroup(){
+  // 전체 초기화 후 섞어서 배정
+  groupMap.forEach(g=>g.length=0);
+  const shuffled = [...sorted].sort(()=>Math.random()-.5);
+  shuffled.forEach((name,i)=>{ groupMap[i%4].push(name); });
+  fullGroupSync();
+}
+function clearGroups(){
+  groupMap.forEach(g=>g.length=0);
+  fullGroupSync();
+}
+
+/* ── 모둠 드래그 공통 ── */
+function startGroupDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, onCommit, onEnd}){
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = disp(name);
+  ghost.style.left = (clientX-40)+'px';
+  ghost.style.top  = (clientY-22)+'px';
+  document.body.appendChild(ghost);
+  sourceChip.classList.add('dragging');
+
+  let moved = false;
+  const startX = clientX, startY = clientY;
+
+  function move(cx,cy){
+    if(Math.abs(cx-startX)+Math.abs(cy-startY)>5) moved=true;
+    ghost.style.left=(cx-40)+'px'; ghost.style.top=(cy-22)+'px';
+    boardEl.querySelectorAll('.g-slot.over,.group-pool.over').forEach(e=>e.classList.remove('over'));
+    const el=document.elementFromPoint(cx,cy);
+    el?.closest?.('.g-slot')?.classList.add('over');
+    el?.closest?.('.group-pool')?.classList.add('over');
+  }
+
+  function up(cx,cy){
+    boardEl.querySelectorAll('.g-slot.over,.group-pool.over').forEach(e=>e.classList.remove('over'));
+    ghost.remove();
+    sourceChip.classList.remove('dragging');
+    onEnd?.();
+
+    if(!moved){
+      // 탭 → 모둠에서 제거 (pool로 반환)
+      const fs = sourceChip.closest('.g-slot');
+      if(fs){ removeFromGroup(name); onCommit(); }
+      return;
+    }
+    const el = document.elementFromPoint(cx,cy);
+    const slot = el?.closest?.('.g-slot');
+    const pool = el?.closest?.('.group-pool');
+    if(slot){
+      const toGi = parseInt(slot.dataset.groupIdx);
+      // 슬롯에 이미 있는 학생이면 스왑
+      const slotIdx = parseInt(slot.dataset.slotIdx);
+      const targetName = groupMap[toGi][slotIdx];
+      // 원래 모둠 찾기
+      let fromGi = -1;
+      groupMap.forEach((g,gi)=>{ if(g.includes(name)) fromGi=gi; });
+
+      if(targetName && targetName !== name){
+        // 스왑
+        removeFromGroup(name);
+        removeFromGroup(targetName);
+        groupMap[toGi].splice(slotIdx,0,name);
+        if(fromGi>=0) groupMap[fromGi].push(targetName);
+        else { /* 풀에서 온 경우 targetName은 풀로 */ }
+      } else {
+        placeInGroup(name, toGi);
+      }
+      onCommit();
+    } else if(pool){
+      removeFromGroup(name);
+      onCommit();
+    }
+  }
+  return {move,up};
+}
+
+/* ── PC 모둠 드래그 ── */
+let gpcDrag=null;
+function makeGPCDown(e){
+  const ch=e.currentTarget;
+  ch.setPointerCapture(e.pointerId);
+  const boardEl = document.getElementById('pcGroupCapture');
+  const drag=startGroupDrag({
+    name:ch.dataset.raw, sourceChip:ch,
+    clientX:e.clientX, clientY:e.clientY,
+    boardEl, poolEl:'pcGroupPool',
+    onCommit:fullGroupSync, onEnd:()=>{}
+  });
+  gpcDrag={id:e.pointerId,drag};
+  window.addEventListener('pointermove',onGPCMove,{passive:false});
+  window.addEventListener('pointerup',  onGPCUp,  {passive:false});
+}
+function onGPCMove(e){if(gpcDrag&&e.pointerId===gpcDrag.id){e.preventDefault();gpcDrag.drag.move(e.clientX,e.clientY);}}
+function onGPCUp(e){
+  if(!gpcDrag||e.pointerId!==gpcDrag.id)return;
+  e.preventDefault();
+  window.removeEventListener('pointermove',onGPCMove);
+  window.removeEventListener('pointerup',onGPCUp);
+  gpcDrag.drag.up(e.clientX,e.clientY);
+  gpcDrag=null;
+}
+
+/* ── 모바일 모둠 드래그 ── */
+let gmDrag=null;
+function makeGMDown(e){
+  const ch=e.currentTarget;
+  const boardEl=document.getElementById('mGroupGrid').closest('div');
+  const drag=startGroupDrag({
+    name:ch.dataset.raw, sourceChip:ch,
+    clientX:e.clientX, clientY:e.clientY,
+    boardEl, poolEl:'mGroupPool',
+    onCommit:fullGroupSync, onEnd:()=>{}
+  });
+  gmDrag={id:e.pointerId,drag};
+  window.addEventListener('pointermove',onGMMove,{passive:false});
+  window.addEventListener('pointerup',  onGMUp,  {passive:false});
+}
+function onGMMove(e){if(gmDrag&&e.pointerId===gmDrag.id){e.preventDefault();gmDrag.drag.move(e.clientX,e.clientY);}}
+function onGMUp(e){
+  if(!gmDrag||e.pointerId!==gmDrag.id)return;
+  e.preventDefault();
+  window.removeEventListener('pointermove',onGMMove);
+  window.removeEventListener('pointerup',onGMUp);
+  gmDrag.drag.up(e.clientX,e.clientY);
+  gmDrag=null;
+}
+
 /* ══ 버튼 이벤트 ══ */
 document.getElementById('pcResetBtn').addEventListener('click', resetAll);
+document.getElementById('pcExamBtn').addEventListener('click', examSeating);
+document.getElementById('pcGroupBtn').addEventListener('click', ()=>{ setGroupMode(true); fullGroupSync(); });
 document.getElementById('pcSaveBtn').addEventListener('click',  savePNG);
 document.getElementById('pcUploadBtn').addEventListener('click',()=>{
   if(!GOOGLE_FORM_URL||GOOGLE_FORM_URL.includes('여기에_')){ alert('구글폼 URL을 먼저 설정하세요.'); return; }
   alert('1) PNG 저장 → 2) 구글폼에 업로드');
   window.open(GOOGLE_FORM_URL,'_blank');
 });
+document.getElementById('pcRandomGroupBtn').addEventListener('click', randomGroup);
+document.getElementById('pcClearGroupBtn').addEventListener('click', clearGroups);
+
 document.getElementById('mResetBtn').addEventListener('click', resetAll);
+document.getElementById('mExamBtn').addEventListener('click', examSeating);
+document.getElementById('mGroupBtn').addEventListener('click', ()=>{ setGroupMode(true); fullGroupSync(); });
+document.getElementById('mRandomGroupBtn').addEventListener('click', randomGroup);
+document.getElementById('mClearGroupBtn').addEventListener('click', clearGroups);
 document.getElementById('mSaveBtn').addEventListener('click',  savePNG);
+
+// 좌석 모드로 돌아가기: pcExamBtn/pcResetBtn 쪽에서 모드 복귀
+document.getElementById('pcExamBtn').addEventListener('click', ()=>setGroupMode(false), true);
+document.getElementById('pcResetBtn').addEventListener('click', ()=>setGroupMode(false), true);
+document.getElementById('mExamBtn').addEventListener('click', ()=>setGroupMode(false), true);
+document.getElementById('mResetBtn').addEventListener('click', ()=>setGroupMode(false), true);
 
 /* ══ 초기화 ══ */
 fullSync();
