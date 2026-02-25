@@ -4,57 +4,161 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>주간 도우미</title>
+
+<!-- ✅ PNG 저장 -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
   :root{
-    --bg:#fef6fb; --card:#fff; --shadow:0 4px 12px rgba(0,0,0,.06);
-    --pink:#ff80ab; --chip:#f1f5ff; --chipLine:#c9d6ff;
-    --drop:#fffde7; --line:#e8e8e8; --text:#222;
+    --bg:#fef6fb;
+    --card:#ffffff;
+    --shadow:0 4px 12px rgba(0,0,0,.06);
+    --pink:#ff80ab;
+    --chip:#f1f5ff;
+    --chipLine:#c9d6ff;
+    --drop:#fffde7;
+    --line:#e8e8e8;
+    --text:#222;
   }
-  body{font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;background:var(--bg);margin:0;padding:12px;color:var(--text);}
-  h1{margin:6px 0 10px;text-align:center;font-size:20px;}
 
-  .topbar{background:var(--card);box-shadow:var(--shadow);border-radius:16px;padding:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
-  .dates{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;}
-  input[type="date"]{border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;background:#fff;}
-  .btns{display:flex;gap:8px;flex-wrap:wrap;}
-  button{border:none;border-radius:12px;padding:9px 12px;background:var(--pink);color:#fff;font-weight:900;cursor:pointer;font-size:13px;}
-  button.secondary{background:#fff;color:#333;border:1px solid var(--line);font-weight:800;}
+  body{
+    font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+    background:var(--bg);
+    margin:0;
+    padding:14px;
+    color:var(--text);
+  }
+  h1{ margin:6px 0 12px; text-align:center; font-size:22px; }
 
-  /* ✅ 모바일: 한 화면에 명단(그리드) → 표 */
-  .layout{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
-  @media (max-width:860px){.layout{grid-template-columns:1fr;}}
+  .topbar{
+    background:var(--card);
+    box-shadow:var(--shadow);
+    border-radius:16px;
+    padding:12px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .dates{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:14px; }
+  input[type="date"]{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:9px 10px;
+    font-size:14px;
+    background:#fff;
+  }
+  .btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  button{
+    border:none;
+    border-radius:12px;
+    padding:10px 12px;
+    background:var(--pink);
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+  }
+  button.secondary{
+    background:#fff;
+    color:#333;
+    border:1px solid var(--line);
+    font-weight:700;
+  }
 
-  .card{background:var(--card);box-shadow:var(--shadow);border-radius:18px;padding:12px;}
-  .card h3{margin:4px 0 10px;font-size:15px;}
+  /* ✅ 모바일: 한 화면에 '명단(그리드) → 역할표' 순서 */
+  .layout{
+    margin-top:12px;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+  }
 
-  /* ✅ 이름표: 좌석표 느낌으로 “작고 촘촘하게” (모바일 4열) */
-  .pool{border:1px dashed var(--line);background:#fbfbff;border-radius:16px;padding:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
-  @media (min-width:861px){.pool{grid-template-columns:repeat(6,minmax(0,1fr));}}
+  .card{
+    background:var(--card);
+    box-shadow:var(--shadow);
+    border-radius:18px;
+    padding:14px;
+  }
+  .card h3{ margin:4px 0 10px; font-size:16px; }
+
+  /* ✅ 좌석표처럼: 이름칩 그리드 */
+  .pool{
+    border:1px dashed var(--line);
+    background:#fbfbff;
+    border-radius:16px;
+    padding:10px;
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:10px;
+  }
+  @media (min-width: 861px){
+    .pool{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1100px){
+    .pool{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
 
   .chip{
-    background:var(--chip); border:1px solid var(--chipLine); border-radius:999px;
-    padding:7px 8px; text-align:center; font-weight:900; user-select:none; touch-action:none;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; line-height:1.2;
+    background:var(--chip);
+    border:1px solid var(--chipLine);
+    border-radius:999px;
+    padding:10px 10px;
+    text-align:center;
+    font-weight:900;
+    user-select:none;
+    touch-action:none; /* ✅ 모바일 드래그 핵심 */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
-  .hint{margin-top:10px;font-size:12px;color:#666;line-height:1.35;}
+  .hint{ margin-top:10px; font-size:12px; color:#666; line-height:1.35; }
 
-  .range{font-weight:900;font-size:13px;border:1px dashed var(--line);border-radius:12px;padding:7px 10px;background:#fff;display:inline-block;margin:0 0 10px;}
+  /* ✅ 역할 표 */
+  #captureArea{ position:relative; }
+  .range{
+    font-weight:900;
+    font-size:14px;
+    border:1px dashed var(--line);
+    border-radius:12px;
+    padding:8px 10px;
+    background:#fff;
+    display:inline-block;
+    margin:0 0 10px;
+  }
 
-  table{width:100%;border-collapse:separate;border-spacing:0;border-radius:16px;overflow:hidden;}
-  th,td{border:1px solid var(--line);padding:9px;font-size:13px;vertical-align:top;}
-  th{background:#fafafa;text-align:left;}
+  table{ width:100%; border-collapse:separate; border-spacing:0; border-radius:16px; overflow:hidden; }
+  th, td{ border:1px solid var(--line); padding:10px; font-size:14px; vertical-align:top; }
+  th{ background:#fafafa; text-align:left; }
 
-  /* ✅ 표 안 내용 제거 / 이름칸 좁힘 */
-  .dropzone{background:var(--drop);border-radius:14px;min-height:38px;padding:7px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
-  .dropzone.is-over{outline:2px dashed #c9c9c9;outline-offset:2px;}
-  .dropzone .chip{padding:6px 8px;background:#dff7e6;border-color:#bfe8c9;cursor:pointer;}
+  .dropzone{
+    background:var(--drop);
+    border-radius:14px;
+    min-height:44px;
+    padding:8px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+  .dropzone.is-over{ outline:2px dashed #c9c9c9; outline-offset:2px; }
 
-  .descBox{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff;font-size:13px;line-height:1.45;}
-  .descBox b{display:inline-block;width:90px;}
+  /* 드롭된 칩은 조금 작게 */
+  .dropzone .chip{ padding:8px 10px; background:#dff7e6; border-color:#bfe8c9; }
 
-  .dragGhost{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%);opacity:.96;box-shadow:0 12px 28px rgba(0,0,0,.18);}
+  /* 드래그 프리뷰 */
+  .dragGhost{
+    position:fixed;
+    z-index:9999;
+    pointer-events:none;
+    transform:translate(-50%,-50%);
+    opacity:.96;
+    box-shadow:0 12px 28px rgba(0,0,0,.18);
+  }
 </style>
 </head>
 
@@ -73,63 +177,78 @@
   </div>
 
   <div class="layout">
-    <!-- ✅ 학생명단(한눈에) -->
+    <!-- ✅ 학생 명단 -->
     <div class="card">
-      <h3>📋 이름표를 아래 자리로 끌어다 놓으세요</h3>
+      <h3>학생 이름표</h3>
       <div class="pool dropzone" id="studentPool" data-max="999"></div>
       <div class="hint">
-        • 역할칸에 들어간 이름표는 <b>한 번 탭</b>하면 원래 명단 자리로 돌아갑니다.<br>
-        • 명단에서 순서가 바뀌어도 자동으로 <b>원래 번호 순서</b>로 정렬됩니다(스왑 방지).
+        • 이름표를 역할칸으로 끌어놓으면 배치됩니다.<br>
+        • 배치된 이름표는 다시 학생 이름표로 끌어오면 됩니다.
       </div>
     </div>
 
-    <!-- ✅ 역할표(아래 스크롤 잘 되게 가벼운 표) -->
+    <!-- ✅ 캡처 영역 (PNG로 저장되는 부분) -->
     <div class="card">
       <div id="captureArea">
         <div class="range" id="rangeText">기간: (날짜 선택)</div>
 
         <table>
           <tr>
-            <th style="width:140px;">이름</th>
-            <th style="width:110px;">역할</th>
+            <th style="width:190px;">이름</th>
+            <th style="width:120px;">역할</th>
+            <th>내용</th>
           </tr>
+
           <tr>
             <td><div class="dropzone" data-max="1" data-role="굿모닝"></div></td>
             <td><b>굿모닝</b></td>
+            <td>출석부 가져오기 / 이동수업 때 출석부 챙기기 / 10분 환기시키기</td>
           </tr>
+
           <tr>
             <td><div class="dropzone" data-max="1" data-role="굿바이"></div></td>
             <td><b>굿바이</b></td>
+            <td>출석부 가져가기 / 이동수업 때 출석부 챙기기 / 전자칠판·멀티탭 전원 종료</td>
           </tr>
+
           <tr>
             <td><div class="dropzone" data-max="2" data-role="칠판"></div></td>
             <td><b>칠판</b></td>
+            <td>칠판 부착물 정리/관리 / (금) 칠판 틀 닦기 / 칠판 지우개 세척</td>
           </tr>
+
           <tr>
             <td><div class="dropzone" data-max="1" data-role="환경부장"></div></td>
             <td><b>★환경부장</b></td>
+            <td>교실 바닥/창틀/교탁 등 쓰레기 없도록 관리 / 발견 시 처리 / (금) 창문 틀 닦기</td>
           </tr>
         </table>
-
-        <!-- ✅ 내용은 표 아래로 -->
-        <div class="descBox">
-          <div><b>굿모닝</b> 출석부 가져오기 · 이동수업 때 출석부 챙기기 · 10분 환기시키기</div>
-          <div><b>굿바이</b> 출석부 가져가기 · 이동수업 때 출석부 챙기기 · 전자칠판/멀티탭 전원 종료</div>
-          <div><b>칠판</b> 칠판 부착물 정리/관리 · (금) 칠판 틀 닦기 · 칠판 지우개 세척하기</div>
-          <div><b>환경부장</b> 바닥/창틀/교탁 정리 · 쓰레기 발견 시 처리 · (금) 창문 틀 닦기</div>
-        </div>
       </div>
     </div>
   </div>
 
 <script>
-const students = [
-  "김지후","노지승","공소연","양지민","오시은","우성아","우지민",
-  "유정인","윤채영","이연수","이윤아","이지우","정채윤","조수연",
-  "최민지","최수빈","황세인","황유민"
-];
-const COL_LAYOUT = [5,5,4,4];
-
+  // ✅ 좌석표(seating.html)과 동일 학생명단/번호(가나다순)
+  const students = [
+    "김지후",
+  "노지승",
+  "공소연",
+  "양지민",
+  "오시은",
+  "우성아",
+  "우지민",
+  "유정인",
+  "윤채영",
+  "이연수",
+  "이윤아",
+  "이지우",
+  "정채윤",
+  "조수연",
+  "최민지",
+  "최수빈",
+  "황세인",
+  "황유민"
+  ];
   function koSort(a,b){ return a.localeCompare(b,'ko'); }
   const sorted = [...students].sort(koSort);
   const numOf  = new Map(sorted.map((n,i)=>[n,i+1]));
@@ -137,70 +256,103 @@ const COL_LAYOUT = [5,5,4,4];
 
   const pool = document.getElementById('studentPool');
 
-  // ✅ 명단으로 돌아오면 “원래 번호 자리”로 자동 정렬 → 스왑/순서꼬임 방지
+  // ✅ 명단으로 돌아올 때 항상 '원래 번호 순서'로 삽입 (스왑/뒤섞임 방지)
   function insertToPoolSorted(chip){
     const name = chip.dataset.name;
     const myNum = numOf.get(name) || 9999;
     const kids = [...pool.querySelectorAll('.chip')];
     let inserted = false;
-    for (const k of kids){
+    for(const k of kids){
       const n = numOf.get(k.dataset.name) || 9999;
-      if (n > myNum){
+      if(n > myNum){
         pool.insertBefore(chip, k);
         inserted = true;
         break;
       }
     }
-    if (!inserted) pool.appendChild(chip);
+    if(!inserted) pool.appendChild(chip);
   }
 
-  // ✅ 역할칸에 들어간 칩을 “탭”하면 원래 명단으로 복귀
   function makeChip(name){
     const d = document.createElement('div');
     d.className = 'chip';
     d.textContent = disp(name);
     d.dataset.name = name;
 
+    // ✅ 역할칸에 있는 이름표는 탭하면 명단으로 복귀
     d.addEventListener('click', ()=>{
       const parent = d.parentElement;
-      if (parent && parent.id !== 'studentPool') insertToPoolSorted(d);
+      if(parent && parent.id !== 'studentPool'){
+        insertToPoolSorted(d);
+      }
     });
+
     return d;
   }
 
   sorted.forEach(n => pool.appendChild(makeChip(n)));
 
-  // 날짜 표시
+  // ✅ 날짜 표시
   const startDate = document.getElementById('startDate');
   const endDate   = document.getElementById('endDate');
   const rangeText = document.getElementById('rangeText');
   function updateRange(){
     const s = startDate.value;
     const e = endDate.value;
-    rangeText.textContent = (!s && !e) ? '기간: (날짜 선택)' : `기간: ${s||'?'} ~ ${e||'?'}`;
+    rangeText.textContent = (!s && !e) ? "기간: (날짜 선택)" : `기간: ${s||"?"} ~ ${e||"?"}`;
   }
   startDate.addEventListener('change', updateRange);
   endDate.addEventListener('change', updateRange);
   updateRange();
 
-  // 터치/마우스 드래그
-  let draggingEl = null, ghost = null;
+  // ✅ 터치/마우스 공통 드래그 (Pointer Events)
+  let draggingEl = null;
+  let ghost = null;
+  let lastX = 0, lastY = 0;
 
   function makeGhost(fromEl, x, y){
     ghost = fromEl.cloneNode(true);
     ghost.classList.add('dragGhost');
-    ghost.style.left = x + 'px';
-    ghost.style.top  = y + 'px';
+    ghost.style.left = x + "px";
+    ghost.style.top  = y + "px";
     document.body.appendChild(ghost);
   }
-  function moveGhost(x,y){ if(ghost){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; } }
+  function moveGhost(x,y){ if(ghost){ ghost.style.left=x+"px"; ghost.style.top=y+"px"; } }
   function removeGhost(){ if(ghost){ ghost.remove(); ghost=null; } }
 
   function zoneCapacityOk(zone){
-    const max = parseInt(zone.dataset.max || '1', 10);
+    const max = parseInt(zone.dataset.max || "1", 10);
     return zone.querySelectorAll('.chip').length < max;
   }
-  function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
+
+  
+  // ✅ 꽉 찬 칸에 드롭하면 '교체(스왑)'
+  function swapIntoZone(chip, targetZone){
+    const fromZone = chip.parentElement;
+
+    // 손가락/마우스 아래에 있는 칩이 targetZone 안에 있으면 그 칩과 교체
+    const under = document.elementFromPoint(lastX, lastY)?.closest('.chip');
+    const victim = (under && under.parentElement === targetZone)
+      ? under
+      : targetZone.querySelector('.chip');
+
+    if(!victim) return;
+
+    // 1) victim을 원래 자리로 보내기
+    if(fromZone && fromZone.id === 'studentPool'){
+      insertToPoolSorted(victim);
+    }else if(fromZone && zoneCapacityOk(fromZone)){
+      fromZone.appendChild(victim);
+    }else{
+      // 원래 자리가 없거나 꽉 찼으면 명단으로
+      insertToPoolSorted(victim);
+    }
+
+    // 2) 끌고 온 chip을 targetZone에 넣기
+    targetZone.appendChild(chip);
+  }
+
+function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
 
   document.addEventListener('pointerdown', (e)=>{
     const target = e.target.closest('.chip');
@@ -214,6 +366,7 @@ const COL_LAYOUT = [5,5,4,4];
   document.addEventListener('pointermove', (e)=>{
     if(!draggingEl) return;
     moveGhost(e.clientX, e.clientY);
+    lastX = e.clientX; lastY = e.clientY;
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
@@ -226,26 +379,40 @@ const COL_LAYOUT = [5,5,4,4];
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
-    if(zone && zoneCapacityOk(zone)){
-      if(zone.id === 'studentPool') insertToPoolSorted(draggingEl);
-      else zone.appendChild(draggingEl);
+    if(zone){
+      if(zone.id === 'studentPool'){
+        insertToPoolSorted(draggingEl);
+      }else{
+        if(zoneCapacityOk(zone)){
+          zone.appendChild(draggingEl);
+        }else{
+          swapIntoZone(draggingEl, zone);
+        }
+      }
     }
     draggingEl = null;
     removeGhost();
     e.preventDefault();
   }, {passive:false});
 
-  document.addEventListener('pointercancel', ()=>{ draggingEl=null; removeGhost(); });
+  document.addEventListener('pointercancel', (e)=>{
+    if(!draggingEl) return;
+    draggingEl = null;
+    removeGhost();
+  });
 
-  // 전체 초기화
+  // ✅ 전체 초기화
   document.getElementById('resetBtn').addEventListener('click', ()=>{
     document.querySelectorAll('#captureArea .dropzone .chip').forEach(ch => insertToPoolSorted(ch));
   });
 
-  // PNG 저장
+  // ✅ PNG 저장
   document.getElementById('savePngBtn').addEventListener('click', async ()=>{
     const capture = document.getElementById('captureArea');
-    const canvas = await html2canvas(capture, { scale:2, backgroundColor:'#ffffff' });
+    const canvas = await html2canvas(capture, {
+      scale: 2,
+      backgroundColor: "#ffffff"
+    });
     canvas.toBlob((blob)=>{
       const a = document.createElement('a');
       const s = startDate.value || 'start';
