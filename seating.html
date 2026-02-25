@@ -252,45 +252,33 @@
     .group-grid{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:14px;
-      margin-bottom:10px;
+      gap:10px;
     }
     .group-card{
       border:2px solid var(--line);border-radius:14px;
       background:#fff;overflow:hidden;
+      display:flex;flex-direction:column;
     }
     .group-header{
-      padding:8px 14px;font-weight:900;font-size:14px;
+      padding:7px 12px;font-weight:900;font-size:13px;
       display:flex;align-items:center;justify-content:space-between;
-      color:#fff;
+      color:#fff;flex-shrink:0;
     }
-    .group-header .g-count{font-size:12px;opacity:.8;font-weight:700;}
-    .group-slots{
-      padding:10px;display:flex;flex-direction:column;gap:8px;
-      min-height:100px;
+    .group-header .g-count{font-size:11px;opacity:.85;font-weight:700;}
+    /* 모둠 본체: 칩을 위에서부터 flex-wrap으로 쌓음 */
+    .group-body{
+      padding:8px;
+      display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;
+      flex:1 1 0;
+      min-height:80px;
+      touch-action:none;
+      transition:background .12s;
     }
-    .g-slot{
-      background:#f7f8fc;border:1.5px dashed #d1d5e8;
-      border-radius:999px;height:46px;
-      display:flex;align-items:center;justify-content:center;
-      position:relative;touch-action:none;
-      transition:background .12s,border-color .12s;
-    }
-    .g-slot.over{background:#f0fff4;border-color:#86efac;border-style:solid;}
-    .names.over{background:#f0fff4;border:1.5px solid #86efac;}
-    .g-slot[data-filled="true"]{border-style:solid;border-color:#c9d6ff;background:#fff;}
-    .g-slot[data-filled="false"]::after{
-      content:"드롭";font-size:10px;color:#c0c7d4;font-weight:800;
-    }
-    .g-slot .chip{width:100%;justify-content:center;border:none;}
-    .g-slot .chip:hover{background:#fee2e2;}
+    .group-body.over{background:#f0fff4;outline:2px solid #86efac;outline-offset:-2px;}
+    .group-body .chip{font-size:12px;padding:5px 10px;}
+    .group-body .chip:hover{background:#fee2e2;}
 
-    .group-pool-wrap{
-      border:1px solid var(--line);border-radius:12px;
-      background:#fafafe;padding:10px;
-    }
-    .group-pool-label{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px;}
-    .group-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:50px;}
+    .names.over{background:#f0fff4;border:1.5px solid #86efac;}
 
     /* 모둠 색상 */
     .gc0{background:linear-gradient(135deg,#6366f1,#4f46e5);}
@@ -306,7 +294,6 @@
       display:flex;flex-direction:column;
       flex:1 1 0;overflow:hidden;
     }
-    .m-seat-wrap .m-seats{ flex:1 1 0; }
 
     /* 모둠 모드 숨김 */
     .seat-mode-content{display:block;}
@@ -316,6 +303,9 @@
     @media(max-width:760px){
       .m-seat-wrap.seat-mode-content{display:flex;flex-direction:column;}
       body.group-mode .group-mode-content{display:flex;flex-direction:column;flex:1 1 0;overflow-y:auto;}
+      /* 모바일: 모둠 그리드를 화면에 꽉 맞게 */
+      .group-grid{ gap:8px; }
+      .group-body{ min-height:60px; }
     }
   </style>
 </head>
@@ -345,6 +335,7 @@
       </div>
       <div class="toolbar" style="margin:0;">
         <button id="pcExamBtn" class="primaryBtn">📝 시험 대형 배치</button>
+        <button id="pcRandomSeatBtn" style="border-color:#e9d5ff;background:#faf5ff;">🎲 랜덤 배치</button>
         <button id="pcGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;">👥 모둠 구성</button>
         <button id="pcSaveBtn" class="primaryBtn">PNG 저장</button>
       </div>
@@ -385,6 +376,7 @@
     <div class="m-topbar-btns">
       <button id="mResetBtn" class="dangerBtn">초기화</button>
       <button id="mExamBtn"  class="primaryBtn">📝 시험배치</button>
+      <button id="mRandomSeatBtn" style="border-color:#e9d5ff;background:#faf5ff;font-size:12px;padding:8px 10px;border-radius:8px;">🎲 랜덤</button>
       <button id="mGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;font-size:12px;padding:8px 10px;border-radius:8px;">👥 모둠</button>
       <button id="mSaveBtn"  class="primaryBtn">💾 PNG</button>
     </div>
@@ -392,12 +384,14 @@
   <div class="m-statusbar" id="mStatusBar"></div>
   <div class="m-details"   id="mDetails"></div>
 
+  <!-- 팔레트: 좌석/모둠 모드 공통 -->
+  <div class="m-palette">
+    <div class="m-palette-label">📋 이름표를 아래 자리로 끌어다 놓으세요</div>
+    <div id="mPool" class="names"></div>
+  </div>
+
   <!-- 모바일 좌석 모드 -->
   <div class="seat-mode-content m-seat-wrap">
-    <div class="m-palette">
-      <div class="m-palette-label">📋 이름표를 아래 자리로 끌어다 놓으세요</div>
-      <div id="mPool" class="names"></div>
-    </div>
     <div class="m-seats" id="mSeats">
       <div class="m-boardWrap" id="mCapture">
         <div id="mBoard"></div>
@@ -407,12 +401,12 @@
   </div>
 
   <!-- 모바일 모둠 모드 -->
-  <div class="group-mode-content" style="padding:8px;background:var(--bg);">
+  <div class="group-mode-content" id="mGroupCapture" style="padding:8px;background:var(--bg);">
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <button id="mRandomGroupBtn" style="flex:1;border-color:#d1fae5;background:#ecfdf5;font-size:13px;">🎲 랜덤 배정</button>
       <button id="mClearGroupBtn" class="dangerBtn" style="flex:1;font-size:13px;">전체 초기화</button>
     </div>
-    <div class="group-grid" id="mGroupGrid" style="grid-template-columns:1fr 1fr;gap:10px;"></div>
+    <div class="group-grid" id="mGroupGrid"></div>
   </div>
 </div>
 
@@ -552,7 +546,13 @@ function resetAll(){
   fullSync();
 }
 
-// 시험 대형: 학생 번호 = 책상 번호로 자동 배치
+// 랜덤 배치: 학생을 좌석에 무작위 배정
+function randomSeating(){
+  seatMap.forEach((_,k)=>seatMap.set(k,null));
+  const shuffled = [...sorted].sort(()=>Math.random()-.5);
+  seatIds.forEach((id,i)=>{ if(i<shuffled.length) seatMap.set(id, shuffled[i]); });
+  fullSync();
+}
 function examSeating(){
   // seatId → seatNo 매핑 먼저 구축 (buildGrid 호출 전이므로 직접 계산)
   seatMap.forEach((_,k)=>seatMap.set(k,null));
@@ -712,7 +712,12 @@ function onMCancel(){
 /* ══ PNG 저장 ══ */
 async function savePNG(){
   const isMobile = window.innerWidth <= 760;
-  const cap = document.getElementById(isMobile ? 'mCapture' : 'pcCapture');
+  let cap;
+  if(isGroupMode){
+    cap = document.getElementById(isMobile ? 'mGroupCapture' : 'pcGroupCapture');
+  } else {
+    cap = document.getElementById(isMobile ? 'mCapture' : 'pcCapture');
+  }
   const rawTitle = (document.getElementById('titleInput')?.value||'').trim();
   const rawDate  = (document.getElementById('dateInput')?.value ||'').trim();
   const cls   = rawTitle || '3-6';
@@ -720,7 +725,7 @@ async function savePNG(){
   const auto  = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const date  = rawDate || auto;
   const match = cls.match(/\((.*?)\)/);
-  const ver   = match ? match[1].replace(/\s/g,'') : '자리배치';
+  const ver   = isGroupMode ? '모둠배치' : (match ? match[1].replace(/\s/g,'') : '자리배치');
   const clean = cls.replace(/\(.*?\)/,'').trim();
   const fname = `${clean}_${date}_${ver}.png`.replace(/[\\/:*?"<>|]/g,'_');
 
@@ -750,16 +755,15 @@ let isGroupMode = false;
 function setGroupMode(on){
   isGroupMode = on;
   document.body.classList.toggle('group-mode', on);
-  // 힌트 텍스트 변경
   const hint = document.querySelector('.panel .hint');
   const mLabel = document.querySelector('.m-palette-label');
   if(on){
-    if(hint) hint.innerHTML = '이름표를 <b>모둠 칸</b>으로 끌어놓으면 배치됩니다.<br>모둠 안 이름을 <b>짧게 탭</b>하면 여기로 돌아옵니다.';
+    if(hint) hint.innerHTML = '이름표를 <b>모둠 박스</b>로 끌어놓으면 배치됩니다.<br>이름을 <b>짧게 탭</b>하면 여기로 돌아옵니다.';
     if(mLabel) mLabel.textContent = '📋 이름표를 모둠으로 끌어다 놓으세요';
+    fullGroupSync();
   } else {
     if(hint) hint.innerHTML = '이름표를 <b>좌석칸</b>으로 끌어놓으면 배치됩니다.<br>좌석에 들어간 이름표는 <b>짧게 탭</b>하면 다시 여기로 돌아옵니다.';
     if(mLabel) mLabel.textContent = '📋 이름표를 아래 자리로 끌어다 놓으세요';
-    // 좌석 모드로 복귀 시 pool 원래대로 복원
     syncPool(document.getElementById('pcPool'), makePCDown);
     syncPool(document.getElementById('mPool'), makeMDown);
   }
@@ -787,27 +791,13 @@ function buildGroupGrid(gridEl, poolEl, isMobile){
     header.innerHTML = `<span>${gname}</span><span class="g-count">${groupMap[gi].length}명</span>`;
     card.appendChild(header);
 
-    const slots = document.createElement('div');
-    slots.className = 'group-slots';
-    slots.dataset.groupIdx = gi;
-
-    // 슬롯 수 = max(현재인원, GROUP_MAX) 단, 최소 GROUP_MAX
-    const slotCount = Math.max(GROUP_MAX, groupMap[gi].length);
-    for(let s=0; s<slotCount; s++){
-      const slot = document.createElement('div');
-      slot.className = 'g-slot';
-      slot.dataset.groupIdx = gi;
-      slot.dataset.slotIdx = s;
-      const member = groupMap[gi][s];
-      if(member){
-        slot.dataset.filled = 'true';
-        slot.appendChild(gChip(member, isMobile ? makeGMDown : makeGPCDown));
-      } else {
-        slot.dataset.filled = 'false';
-      }
-      slots.appendChild(slot);
-    }
-    card.appendChild(slots);
+    const body = document.createElement('div');
+    body.className = 'group-body';
+    body.dataset.groupIdx = gi;
+    groupMap[gi].forEach(name=>{
+      body.appendChild(gChip(name, isMobile ? makeGMDown : makeGPCDown));
+    });
+    card.appendChild(body);
     gridEl.appendChild(card);
   });
 }
@@ -866,47 +856,30 @@ function startGroupDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, on
   function move(cx,cy){
     if(Math.abs(cx-startX)+Math.abs(cy-startY)>5) moved=true;
     ghost.style.left=(cx-40)+'px'; ghost.style.top=(cy-22)+'px';
-    document.querySelectorAll('.g-slot.over,.names.over').forEach(e=>e.classList.remove('over'));
+    document.querySelectorAll('.group-body.over,.names.over').forEach(e=>e.classList.remove('over'));
     const el=document.elementFromPoint(cx,cy);
-    el?.closest?.('.g-slot')?.classList.add('over');
+    el?.closest?.('.group-body')?.classList.add('over');
     const maybePool=el?.closest?.(`#${poolEl}`);
     if(maybePool) maybePool.classList.add('over');
   }
 
   function up(cx,cy){
-    document.querySelectorAll('.g-slot.over,.names.over').forEach(e=>e.classList.remove('over'));
+    document.querySelectorAll('.group-body.over,.names.over').forEach(e=>e.classList.remove('over'));
     ghost.remove();
     sourceChip.classList.remove('dragging');
     onEnd?.();
 
     if(!moved){
       // 탭 → 모둠에서 제거 (pool로 반환)
-      const fs = sourceChip.closest('.g-slot');
-      if(fs){ removeFromGroup(name); onCommit(); }
+      const fb = sourceChip.closest('.group-body');
+      if(fb){ removeFromGroup(name); onCommit(); }
       return;
     }
     const el = document.elementFromPoint(cx,cy);
-    const slot = el?.closest?.('.g-slot');
+    const body = el?.closest?.('.group-body');
     const pool = el?.closest?.(`#${poolEl}`);
-    if(slot){
-      const toGi = parseInt(slot.dataset.groupIdx);
-      // 슬롯에 이미 있는 학생이면 스왑
-      const slotIdx = parseInt(slot.dataset.slotIdx);
-      const targetName = groupMap[toGi][slotIdx];
-      // 원래 모둠 찾기
-      let fromGi = -1;
-      groupMap.forEach((g,gi)=>{ if(g.includes(name)) fromGi=gi; });
-
-      if(targetName && targetName !== name){
-        // 스왑
-        removeFromGroup(name);
-        removeFromGroup(targetName);
-        groupMap[toGi].splice(slotIdx,0,name);
-        if(fromGi>=0) groupMap[fromGi].push(targetName);
-        else { /* 풀에서 온 경우 targetName은 풀로 */ }
-      } else {
-        placeInGroup(name, toGi);
-      }
+    if(body){
+      placeInGroup(name, parseInt(body.dataset.groupIdx));
       onCommit();
     } else if(pool){
       removeFromGroup(name);
@@ -970,14 +943,16 @@ function onGMUp(e){
 /* ══ 버튼 이벤트 ══ */
 document.getElementById('pcResetBtn').addEventListener('click', resetAll);
 document.getElementById('pcExamBtn').addEventListener('click', examSeating);
-document.getElementById('pcGroupBtn').addEventListener('click', ()=>{ setGroupMode(true); fullGroupSync(); });
+document.getElementById('pcRandomSeatBtn').addEventListener('click', randomSeating);
+document.getElementById('pcGroupBtn').addEventListener('click', ()=>setGroupMode(true));
 document.getElementById('pcSaveBtn').addEventListener('click',  savePNG);
 document.getElementById('pcRandomGroupBtn').addEventListener('click', randomGroup);
 document.getElementById('pcClearGroupBtn').addEventListener('click', clearGroups);
 
 document.getElementById('mResetBtn').addEventListener('click', resetAll);
 document.getElementById('mExamBtn').addEventListener('click', examSeating);
-document.getElementById('mGroupBtn').addEventListener('click', ()=>{ setGroupMode(true); fullGroupSync(); });
+document.getElementById('mRandomSeatBtn').addEventListener('click', randomSeating);
+document.getElementById('mGroupBtn').addEventListener('click', ()=>setGroupMode(true));
 document.getElementById('mRandomGroupBtn').addEventListener('click', randomGroup);
 document.getElementById('mClearGroupBtn').addEventListener('click', clearGroups);
 document.getElementById('mSaveBtn').addEventListener('click',  savePNG);
