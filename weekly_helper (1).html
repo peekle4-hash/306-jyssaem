@@ -185,6 +185,7 @@ const COL_LAYOUT = [5,5,4,4];
 
   // 터치/마우스 드래그
   let draggingEl = null, ghost = null;
+  let lastX = 0, lastY = 0;
 
   function makeGhost(fromEl, x, y){
     ghost = fromEl.cloneNode(true);
@@ -200,7 +201,32 @@ const COL_LAYOUT = [5,5,4,4];
     const max = parseInt(zone.dataset.max || '1', 10);
     return zone.querySelectorAll('.chip').length < max;
   }
-  function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
+  
+  // ✅ 꽉 찬 칸에 드롭하면 교체(스왑)
+  function swapIntoZone(chip, targetZone){
+    const fromZone = chip.parentElement;
+
+    // 손가락/마우스 아래 칩이 targetZone 안에 있으면 그 칩과 교체, 아니면 첫 칩과 교체
+    const under = document.elementFromPoint(lastX, lastY)?.closest('.chip');
+    const victim = (under && under.parentElement === targetZone)
+      ? under
+      : targetZone.querySelector('.chip');
+
+    if(!victim) return;
+
+    // 1) victim을 원래 자리로 보내기
+    if(fromZone && fromZone.id === 'studentPool'){
+      insertToPoolSorted(victim);
+    }else if(fromZone && zoneCapacityOk(fromZone)){
+      fromZone.appendChild(victim);
+    }else{
+      insertToPoolSorted(victim);
+    }
+
+    // 2) 끌고 온 chip을 targetZone에 넣기
+    targetZone.appendChild(chip);
+  }
+function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
 
   document.addEventListener('pointerdown', (e)=>{
     const target = e.target.closest('.chip');
@@ -214,6 +240,7 @@ const COL_LAYOUT = [5,5,4,4];
   document.addEventListener('pointermove', (e)=>{
     if(!draggingEl) return;
     moveGhost(e.clientX, e.clientY);
+    lastX = e.clientX; lastY = e.clientY;
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
@@ -226,9 +253,16 @@ const COL_LAYOUT = [5,5,4,4];
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
-    if(zone && zoneCapacityOk(zone)){
-      if(zone.id === 'studentPool') insertToPoolSorted(draggingEl);
-      else zone.appendChild(draggingEl);
+    if(zone){
+      if(zone.id === 'studentPool'){
+        insertToPoolSorted(draggingEl);
+      }else{
+        if(zoneCapacityOk(zone)){
+          zone.appendChild(draggingEl);
+        }else{
+          swapIntoZone(draggingEl, zone);
+        }
+      }
     }
     draggingEl = null;
     removeGhost();
