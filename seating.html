@@ -277,6 +277,7 @@
       transition:background .12s,border-color .12s;
     }
     .g-slot.over{background:#f0fff4;border-color:#86efac;border-style:solid;}
+    .names.over{background:#f0fff4;border:1.5px solid #86efac;}
     .g-slot[data-filled="true"]{border-style:solid;border-color:#c9d6ff;background:#fff;}
     .g-slot[data-filled="false"]::after{
       content:"드롭";font-size:10px;color:#c0c7d4;font-weight:800;
@@ -372,10 +373,6 @@
           </div>
         </div>
         <div class="group-grid" id="pcGroupGrid"></div>
-        <div class="group-pool-wrap">
-          <div class="group-pool-label">📋 미배정 학생 — 모둠으로 끌어다 놓으세요</div>
-          <div class="group-pool" id="pcGroupPool"></div>
-        </div>
       </div>
     </div>
   </section>
@@ -416,10 +413,6 @@
       <button id="mClearGroupBtn" class="dangerBtn" style="flex:1;font-size:13px;">전체 초기화</button>
     </div>
     <div class="group-grid" id="mGroupGrid" style="grid-template-columns:1fr 1fr;gap:10px;"></div>
-    <div class="group-pool-wrap" style="margin-top:10px;">
-      <div class="group-pool-label">📋 미배정 학생</div>
-      <div class="group-pool" id="mGroupPool"></div>
-    </div>
   </div>
 </div>
 
@@ -757,6 +750,19 @@ let isGroupMode = false;
 function setGroupMode(on){
   isGroupMode = on;
   document.body.classList.toggle('group-mode', on);
+  // 힌트 텍스트 변경
+  const hint = document.querySelector('.panel .hint');
+  const mLabel = document.querySelector('.m-palette-label');
+  if(on){
+    if(hint) hint.innerHTML = '이름표를 <b>모둠 칸</b>으로 끌어놓으면 배치됩니다.<br>모둠 안 이름을 <b>짧게 탭</b>하면 여기로 돌아옵니다.';
+    if(mLabel) mLabel.textContent = '📋 이름표를 모둠으로 끌어다 놓으세요';
+  } else {
+    if(hint) hint.innerHTML = '이름표를 <b>좌석칸</b>으로 끌어놓으면 배치됩니다.<br>좌석에 들어간 이름표는 <b>짧게 탭</b>하면 다시 여기로 돌아옵니다.';
+    if(mLabel) mLabel.textContent = '📋 이름표를 아래 자리로 끌어다 놓으세요';
+    // 좌석 모드로 복귀 시 pool 원래대로 복원
+    syncPool(document.getElementById('pcPool'), makePCDown);
+    syncPool(document.getElementById('mPool'), makeMDown);
+  }
 }
 
 /* ── 모둠 칩 생성 ── */
@@ -815,10 +821,10 @@ function syncGroupPool(poolEl, isMobile){
 }
 
 function fullGroupSync(){
-  buildGroupGrid(document.getElementById('pcGroupGrid'), document.getElementById('pcGroupPool'), false);
-  syncGroupPool(document.getElementById('pcGroupPool'), false);
-  buildGroupGrid(document.getElementById('mGroupGrid'), document.getElementById('mGroupPool'), true);
-  syncGroupPool(document.getElementById('mGroupPool'), true);
+  buildGroupGrid(document.getElementById('pcGroupGrid'), document.getElementById('pcPool'), false);
+  syncGroupPool(document.getElementById('pcPool'), false);
+  buildGroupGrid(document.getElementById('mGroupGrid'), document.getElementById('mPool'), true);
+  syncGroupPool(document.getElementById('mPool'), true);
 }
 
 /* ── 모둠에 배치 ── */
@@ -860,14 +866,15 @@ function startGroupDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, on
   function move(cx,cy){
     if(Math.abs(cx-startX)+Math.abs(cy-startY)>5) moved=true;
     ghost.style.left=(cx-40)+'px'; ghost.style.top=(cy-22)+'px';
-    boardEl.querySelectorAll('.g-slot.over,.group-pool.over').forEach(e=>e.classList.remove('over'));
+    document.querySelectorAll('.g-slot.over,.names.over').forEach(e=>e.classList.remove('over'));
     const el=document.elementFromPoint(cx,cy);
     el?.closest?.('.g-slot')?.classList.add('over');
-    el?.closest?.('.group-pool')?.classList.add('over');
+    const maybePool=el?.closest?.(`#${poolEl}`);
+    if(maybePool) maybePool.classList.add('over');
   }
 
   function up(cx,cy){
-    boardEl.querySelectorAll('.g-slot.over,.group-pool.over').forEach(e=>e.classList.remove('over'));
+    document.querySelectorAll('.g-slot.over,.names.over').forEach(e=>e.classList.remove('over'));
     ghost.remove();
     sourceChip.classList.remove('dragging');
     onEnd?.();
@@ -880,7 +887,7 @@ function startGroupDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, on
     }
     const el = document.elementFromPoint(cx,cy);
     const slot = el?.closest?.('.g-slot');
-    const pool = el?.closest?.('.group-pool');
+    const pool = el?.closest?.(`#${poolEl}`);
     if(slot){
       const toGi = parseInt(slot.dataset.groupIdx);
       // 슬롯에 이미 있는 학생이면 스왑
@@ -918,7 +925,7 @@ function makeGPCDown(e){
   const drag=startGroupDrag({
     name:ch.dataset.raw, sourceChip:ch,
     clientX:e.clientX, clientY:e.clientY,
-    boardEl, poolEl:'pcGroupPool',
+    boardEl, poolEl:'pcPool',
     onCommit:fullGroupSync, onEnd:()=>{}
   });
   gpcDrag={id:e.pointerId,drag};
@@ -943,7 +950,7 @@ function makeGMDown(e){
   const drag=startGroupDrag({
     name:ch.dataset.raw, sourceChip:ch,
     clientX:e.clientX, clientY:e.clientY,
-    boardEl, poolEl:'mGroupPool',
+    boardEl, poolEl:'mPool',
     onCommit:fullGroupSync, onEnd:()=>{}
   });
   gmDrag={id:e.pointerId,drag};
