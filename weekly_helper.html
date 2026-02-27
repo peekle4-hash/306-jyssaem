@@ -4,493 +4,267 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>주간 도우미</title>
-
-<!-- ✅ PNG 저장용 (GitHub Pages에서 동작) -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
   :root{
-    --bg:#fef6fb;
-    --card:#ffffff;
-    --shadow:0 4px 12px rgba(0,0,0,.06);
-    --pink:#ff80ab;
-    --blue:#e3f2fd;
-    --drop:#fffde7;
-    --line:#e8e8e8;
+    --bg:#fef6fb; --card:#fff; --shadow:0 4px 12px rgba(0,0,0,.06);
+    --pink:#ff80ab; --chip:#f1f5ff; --chipLine:#c9d6ff;
+    --drop:#fffde7; --line:#e8e8e8; --text:#222;
   }
+  body{font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;background:var(--bg);margin:0;padding:12px;color:var(--text);}
+  h1{margin:6px 0 10px;text-align:center;font-size:20px;}
 
-  body{
-    font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    background:var(--bg);
-    margin:0;
-    padding:18px;
-  }
-  h1{ margin:6px 0 14px; text-align:center; font-size:22px; }
+  .topbar{background:var(--card);box-shadow:var(--shadow);border-radius:16px;padding:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .dates{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;}
+  input[type="date"]{border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;background:#fff;}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;}
+  button{border:none;border-radius:12px;padding:9px 12px;background:var(--pink);color:#fff;font-weight:900;cursor:pointer;font-size:13px;}
+  button.secondary{background:#fff;color:#333;border:1px solid var(--line);font-weight:800;}
 
-  .topbar{
-    background:var(--card);
-    box-shadow:var(--shadow);
-    border-radius:16px;
-    padding:14px;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .dates{
-    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-    font-size:14px;
-  }
-  input[type="date"]{
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:8px 10px;
-    font-size:14px;
-    background:#fff;
-  }
+  /* ✅ 모바일: 한 화면에 명단(그리드) → 표 */
+  .layout{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
+  @media (max-width:860px){.layout{grid-template-columns:1fr;}}
 
-  .btns{ display:flex; gap:8px; flex-wrap:wrap; }
-  button{
-    border:none;
-    border-radius:12px;
-    padding:10px 12px;
-    background:var(--pink);
-    color:#fff;
-    font-weight:700;
-    cursor:pointer;
-  }
-  button.secondary{
-    background:#fff;
-    color:#333;
-    border:1px solid var(--line);
-    font-weight:600;
-  }
+  .card{background:var(--card);box-shadow:var(--shadow);border-radius:18px;padding:12px;}
+  .card h3{margin:4px 0 10px;font-size:15px;}
 
-  .container{
-    margin-top:14px;
-    display:grid;
-    grid-template-columns: 280px 1fr;
-    gap:14px;
-    align-items:start;
-  }
-  .card{
-    background:var(--card);
-    box-shadow:var(--shadow);
-    border-radius:16px;
-    padding:14px;
-  }
-  .card h3{ margin:4px 0 10px; font-size:16px; }
+  /* ✅ 이름표: 좌석표 느낌으로 “작고 촘촘하게” (모바일 4열) */
+  .pool{border:1px dashed var(--line);background:#fbfbff;border-radius:16px;padding:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  @media (min-width:861px){.pool{grid-template-columns:repeat(6,minmax(0,1fr));}}
 
-  /* 학생칩 */
-  .studentList{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    min-height:220px;
+  .chip{
+    background:var(--chip); border:1px solid var(--chipLine); border-radius:999px;
+    padding:7px 8px; text-align:center; font-weight:900; user-select:none; touch-action:none;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; line-height:1.2;
   }
-  .student{
-    background:var(--blue);
-    border-radius:12px;
-    padding:10px 10px;
-    text-align:center;
-    font-weight:700;
-    user-select:none;
-    touch-action:none;              /* ✅ 모바일 터치 드래그 핵심 */
-  }
-  .hint{
-    font-size:12px; color:#666; margin-top:8px; line-height:1.35;
-  }
+  .hint{margin-top:10px;font-size:12px;color:#666;line-height:1.35;}
 
-  /* 역할표 */
-  #captureArea{ position:relative; }
-  .weekTitle{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:flex-end;
-    margin:0 0 10px;
-  }
-  .weekTitle .range{
-    font-weight:800;
-    font-size:14px;
-    background:#fff;
-    border:1px dashed var(--line);
-    border-radius:12px;
-    padding:8px 10px;
-  }
+  .range{font-weight:900;font-size:13px;border:1px dashed var(--line);border-radius:12px;padding:7px 10px;background:#fff;display:inline-block;margin:0 0 10px;}
 
-  table{ width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:14px; }
-  th, td{ border:1px solid var(--line); padding:10px; font-size:14px; vertical-align:top; }
-  th{ background:#fafafa; text-align:left; }
+  table{width:100%;border-collapse:separate;border-spacing:0;border-radius:16px;overflow:hidden;}
+  th,td{border:1px solid var(--line);padding:12px;font-size:16px;vertical-align:middle;}
+  th{background:#fafafa;text-align:left;}
+  td b{font-size:16px;}
 
-  .dropwrap{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .dropzone{
-    background:var(--drop);
-    border-radius:12px;
-    min-height:42px;
-    padding:6px;
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-    align-items:center;
-  }
-  .dropzone.is-over{ outline:2px dashed #c9c9c9; outline-offset:2px; }
+  /* ✅ 표 안 내용 제거 / 이름칸 좁힘 */
+  .dropzone{background:var(--drop);border-radius:14px;min-height:38px;padding:7px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .dropzone.is-over{outline:2px dashed #c9c9c9;outline-offset:2px;}
+  .dropzone .chip{padding:6px 8px;background:#dff7e6;border-color:#bfe8c9;cursor:pointer;}
 
-  .student.inZone{
-    background:#dff7e6;
-    padding:8px 10px;
-    border-radius:999px;
-    font-weight:800;
-  }
+  .descBox{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff;font-size:13px;line-height:1.6;}
+  .descBox .desc-row{display:flex;gap:6px;margin-bottom:5px;}
+  .descBox .desc-row:last-child{margin-bottom:0;}
+  .descBox b{flex-shrink:0;white-space:nowrap;}
+  .descBox .desc-text{word-break:keep-all;}
 
-  /* ✅ 모바일 최적화 */
-  @media (max-width: 820px){
-    body{ padding:12px; }
-    .container{ grid-template-columns:1fr; }
-    /* 학생명단: 가로 칩 스크롤 */
-    .studentList{
-      flex-direction:row;
-      flex-wrap:nowrap;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-      padding-bottom:6px;
-      min-height:auto;
-    }
-    .student{
-      min-width:120px;
-      white-space:nowrap;
-    }
-  }
-
-  /* 드래그 중 떠다니는 프리뷰 */
-  .dragGhost{
-    position:fixed;
-    z-index:9999;
-    pointer-events:none;
-    transform:translate(-50%,-50%);
-    opacity:.95;
-    box-shadow:0 10px 25px rgba(0,0,0,.18);
-  }
+  .dragGhost{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%);opacity:.96;box-shadow:0 12px 28px rgba(0,0,0,.18);}
 </style>
 </head>
 
 <body>
-  <h1>🩷 주간 도우미 배정</h1>
+  <h1>🧹 주간 도우미 배정</h1>
 
   <div class="topbar">
     <div class="dates">
       📅 시작일: <input type="date" id="startDate">
       ~ 종료일: <input type="date" id="endDate">
     </div>
-
     <div class="btns">
-      <button class="secondary" id="resetBtn">초기화</button>
-      <button id="savePngBtn">PNG로 저장</button>
+      <button class="secondary" id="resetBtn">전체 초기화</button>
+      <button id="savePngBtn">PNG 저장</button>
     </div>
   </div>
 
-  <div class="container">
-    <!-- ✅ 학생 명단 -->
+  <div class="layout">
+    <!-- ✅ 학생명단(한눈에) -->
     <div class="card">
-      <h3>학생 명단 (드래그해서 넣기)</h3>
-      <div class="studentList dropzone" id="studentPool" data-max="999">
-        <!-- 🔥 좌석표랑 동일하게 이름만 바꿔주면 됨 -->
-        <div class="student" data-name="1. 학생1">1. 학생1</div>
-        <div class="student" data-name="2. 학생2">2. 학생2</div>
-        <div class="student" data-name="3. 학생3">3. 학생3</div>
-        <div class="student" data-name="4. 학생4">4. 학생4</div>
-        <div class="student" data-name="5. 학생5">5. 학생5</div>
-        <div class="student" data-name="6. 학생6">6. 학생6</div>
-        <div class="student" data-name="7. 학생7">7. 학생7</div>
-        <div class="student" data-name="8. 학생8">8. 학생8</div>
-        <div class="student" data-name="9. 학생9">9. 학생9</div>
-        <div class="student" data-name="10. 학생10">10. 학생10</div>
-        <div class="student" data-name="11. 학생11">11. 학생11</div>
-        <div class="student" data-name="12. 학생12">12. 학생12</div>
-        <div class="student" data-name="13. 학생13">13. 학생13</div>
-        <div class="student" data-name="14. 학생14">14. 학생14</div>
-        <div class="student" data-name="15. 학생15">15. 학생15</div>
-        <div class="student" data-name="16. 학생16">16. 학생16</div>
-        <div class="student" data-name="17. 학생17">17. 학생17</div>
-        <div class="student" data-name="18. 학생18">18. 학생18</div>
-      </div>
-
+      <h3>📋 이름표를 아래 자리로 끌어다 놓으세요</h3>
+      <div class="pool dropzone" id="studentPool" data-max="999"></div>
       <div class="hint">
-        ✅ 모바일은 “길게 누른 뒤” 끌어다 놓으면 돼요.<br/>
-        ✅ 배정된 이름을 다시 학생명단 칸으로 끌어오면 원위치됩니다.
+        • 역할칸에 들어간 이름표는 <b>한 번 탭</b>하면 원래 명단 자리로 돌아갑니다.<br>
+        • 명단에서 순서가 바뀌어도 자동으로 <b>원래 번호 순서</b>로 정렬됩니다(스왑 방지).
       </div>
     </div>
 
-    <!-- ✅ 캡처 영역(= PNG로 저장될 부분) -->
-    <div class="card" id="captureAreaWrap">
+    <!-- ✅ 역할표(아래 스크롤 잘 되게 가벼운 표) -->
+    <div class="card">
       <div id="captureArea">
-        <div class="weekTitle">
-          <h3 style="margin:0;">역할 배정표</h3>
-          <div class="range" id="rangeText">기간: (날짜 선택)</div>
-        </div>
+        <div class="range" id="rangeText">기간: (날짜 선택)</div>
 
         <table>
           <tr>
-            <th style="width:170px;">이름</th>
-            <th style="width:120px;">역할</th>
-            <th>내용</th>
+            <th style="width:140px;">이름</th>
+            <th style="width:110px;">역할</th>
           </tr>
-
           <tr>
-            <td>
-              <div class="dropzone" data-max="1" data-role="굿모닝"></div>
-            </td>
+            <td><div class="dropzone" data-max="1" data-role="굿모닝"></div></td>
             <td><b>굿모닝</b></td>
-            <td>출석부 가져오기 / 이동수업 때 출석부 챙기기 / 10분 환기</td>
           </tr>
-
           <tr>
-            <td>
-              <div class="dropzone" data-max="1" data-role="굿바이"></div>
-            </td>
+            <td><div class="dropzone" data-max="1" data-role="굿바이"></div></td>
             <td><b>굿바이</b></td>
-            <td>출석부 가져가기 / 이동수업 때 출석부 챙기기 / 전자칠판·멀티탭 전원 종료</td>
           </tr>
-
           <tr>
-            <td>
-              <!-- ✅ 칠판은 2명 가능 -->
-              <div class="dropzone" data-max="2" data-role="칠판"></div>
-            </td>
+            <td><div class="dropzone" data-max="2" data-role="칠판"></div></td>
             <td><b>칠판</b></td>
-            <td>칠판 부착물 정리/관리 / (금) 틀 닦기 / 지우개 세척</td>
           </tr>
-
           <tr>
-            <td>
-              <div class="dropzone" data-max="1" data-role="환경부장"></div>
-            </td>
+            <td><div class="dropzone" data-max="1" data-role="환경부장"></div></td>
             <td><b>★환경부장</b></td>
-            <td>바닥/창틀/교탁 등 쓰레기 없게 관리 / 발견 시 버리기 / (금) 창문 틀 닦기</td>
           </tr>
         </table>
+
+        <!-- ✅ 내용은 표 아래로 -->
+        <div class="descBox">
+          <div class="desc-row"><b>굿모닝</b><span class="desc-text">출석부 가져오기 · 이동수업 때 출석부 챙기기 · 10분 환기시키기</span></div>
+          <div class="desc-row"><b>굿바이</b><span class="desc-text">출석부 가져가기 · 이동수업 때 출석부 챙기기 · 전자칠판/멀티탭 전원 종료</span></div>
+          <div class="desc-row"><b>칠판</b><span class="desc-text">칠판 부착물 정리/관리 · (금) 칠판 틀 닦기 · 칠판 지우개 세척하기</span></div>
+          <div class="desc-row"><b>환경부장</b><span class="desc-text">바닥/창틀/교탁 정리 · 쓰레기 발견 시 처리 · (금) 창문 틀 닦기</span></div>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
-  // ✅ 날짜 표시
+const students = [
+  "김지후","노지승","공소연","양지민","오시은","우성아","우지민",
+  "유정인","윤채영","이연수","이윤아","이지우","정채윤","조수연",
+  "최민지","최수빈","황세인","황유민"
+];
+const COL_LAYOUT = [5,5,4,4];
+
+  function koSort(a,b){ return a.localeCompare(b,'ko'); }
+  const sorted = [...students].sort(koSort);
+  const numOf  = new Map(sorted.map((n,i)=>[n,i+1]));
+  const disp   = n => `${numOf.get(n)||''}. ${n}`;
+
+  const pool = document.getElementById('studentPool');
+
+  // ✅ 명단으로 돌아오면 “원래 번호 자리”로 자동 정렬 → 스왑/순서꼬임 방지
+  function insertToPoolSorted(chip){
+    const name = chip.dataset.name;
+    const myNum = numOf.get(name) || 9999;
+    const kids = [...pool.querySelectorAll('.chip')];
+    let inserted = false;
+    for (const k of kids){
+      const n = numOf.get(k.dataset.name) || 9999;
+      if (n > myNum){
+        pool.insertBefore(chip, k);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) pool.appendChild(chip);
+  }
+
+  // ✅ 역할칸에 들어간 칩을 “탭”하면 원래 명단으로 복귀
+  function makeChip(name){
+    const d = document.createElement('div');
+    d.className = 'chip';
+    d.textContent = disp(name);
+    d.dataset.name = name;
+
+    d.addEventListener('click', ()=>{
+      const parent = d.parentElement;
+      if (parent && parent.id !== 'studentPool') insertToPoolSorted(d);
+    });
+    return d;
+  }
+
+  sorted.forEach(n => pool.appendChild(makeChip(n)));
+
+  // 날짜 표시
   const startDate = document.getElementById('startDate');
   const endDate   = document.getElementById('endDate');
   const rangeText = document.getElementById('rangeText');
-
   function updateRange(){
     const s = startDate.value;
     const e = endDate.value;
-    if(!s && !e) rangeText.textContent = "기간: (날짜 선택)";
-    else rangeText.textContent = `기간: ${s || "?"} ~ ${e || "?"}`;
+    rangeText.textContent = (!s && !e) ? '기간: (날짜 선택)' : `기간: ${s||'?'} ~ ${e||'?'}`;
   }
   startDate.addEventListener('change', updateRange);
   endDate.addEventListener('change', updateRange);
+  updateRange();
 
-  // ✅ 터치/마우스 공통 드래그 (Pointer Events)
-  let draggingEl = null;
-  let ghost = null;
+  // 터치/마우스 드래그
+  let draggingEl = null, ghost = null;
 
   function makeGhost(fromEl, x, y){
     ghost = fromEl.cloneNode(true);
     ghost.classList.add('dragGhost');
-    ghost.style.left = x + "px";
-    ghost.style.top  = y + "px";
+    ghost.style.left = x + 'px';
+    ghost.style.top  = y + 'px';
     document.body.appendChild(ghost);
   }
-  function moveGhost(x,y){
-    if(!ghost) return;
-    ghost.style.left = x + "px";
-    ghost.style.top  = y + "px";
-  }
-  function removeGhost(){
-    if(ghost){ ghost.remove(); ghost=null; }
-  }
+  function moveGhost(x,y){ if(ghost){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; } }
+  function removeGhost(){ if(ghost){ ghost.remove(); ghost=null; } }
 
   function zoneCapacityOk(zone){
-    const max = parseInt(zone.dataset.max || "1", 10);
-    return zone.querySelectorAll('.student').length < max;
+    const max = parseInt(zone.dataset.max || '1', 10);
+    return zone.querySelectorAll('.chip').length < max;
   }
+  function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
 
-  function attachStudentStyle(el, inZone){
-    if(inZone){
-      el.classList.add('inZone');
-      el.classList.add('student');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-
-      // 👆 중복 class add는 문제 없어서 그냥 둬도 됨(시각 영향 없음)
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-      el.classList.add('inZone');
-
-      el.classList.add('inZone');
-
-      // 실제 스타일은 .student.inZone에서 처리
-    }else{
-      el.classList.remove('inZone');
-    }
-  }
-
-  function onPointerDown(e){
-    const target = e.target.closest('.student');
+  document.addEventListener('pointerdown', (e)=>{
+    const target = e.target.closest('.chip');
     if(!target) return;
     draggingEl = target;
     draggingEl.setPointerCapture?.(e.pointerId);
-
-    // 떠다니는 프리뷰
-    const x = e.clientX, y = e.clientY;
-    makeGhost(draggingEl, x, y);
-
-    // 스크롤 방지 (모바일에서 드래그 중 화면이 움직이는 걸 줄임)
+    makeGhost(draggingEl, e.clientX, e.clientY);
     e.preventDefault();
-  }
+  }, {passive:false});
 
-  function clearOver(){
-    document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over'));
-  }
-
-  function onPointerMove(e){
+  document.addEventListener('pointermove', (e)=>{
     if(!draggingEl) return;
     moveGhost(e.clientX, e.clientY);
-
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
     if(zone) zone.classList.add('is-over');
-
     e.preventDefault();
-  }
+  }, {passive:false});
 
-  function onPointerUp(e){
+  document.addEventListener('pointerup', (e)=>{
     if(!draggingEl) return;
-
     clearOver();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const zone = el?.closest('.dropzone');
-
-    if(zone && zoneCapacityOk(zone)){
-      // ✅ 드롭 성공
-      zone.appendChild(draggingEl);
-      attachStudentStyle(draggingEl, zone.id !== 'studentPool'); // 학생풀 제외 시 inZone 스타일
+    if(zone){
+      const fromZone = draggingEl.parentElement;
+      if(zone.id === 'studentPool'){
+        insertToPoolSorted(draggingEl);
+      } else if(zoneCapacityOk(zone)){
+        zone.appendChild(draggingEl);
+      } else {
+        // 드롭존이 꽉 찬 경우 → 기존 칩과 스왑
+        const existingChip = zone.querySelector('.chip');
+        if(existingChip && fromZone){
+          if(fromZone.id === 'studentPool'){
+            insertToPoolSorted(existingChip);
+          } else {
+            fromZone.appendChild(existingChip);
+          }
+          zone.appendChild(draggingEl);
+        }
+      }
     }
-
     draggingEl = null;
     removeGhost();
     e.preventDefault();
-  }
+  }, {passive:false});
 
-  document.addEventListener('pointerdown', onPointerDown, {passive:false});
-  document.addEventListener('pointermove', onPointerMove, {passive:false});
-  document.addEventListener('pointerup', onPointerUp, {passive:false});
-  document.addEventListener('pointercancel', onPointerUp, {passive:false});
+  document.addEventListener('pointercancel', ()=>{ draggingEl=null; removeGhost(); });
 
-  // ✅ 초기화: 전부 학생풀로
-  const resetBtn = document.getElementById('resetBtn');
-  resetBtn.addEventListener('click', ()=>{
-    const pool = document.getElementById('studentPool');
-    document.querySelectorAll('#captureArea .dropzone .student').forEach(st=>{
-      pool.appendChild(st);
-      attachStudentStyle(st, false);
-    });
+  // 전체 초기화
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    document.querySelectorAll('#captureArea .dropzone .chip').forEach(ch => insertToPoolSorted(ch));
   });
 
-  // ✅ PNG 바로 다운로드
-  const saveBtn = document.getElementById('savePngBtn');
-  saveBtn.addEventListener('click', async ()=>{
+  // PNG 저장
+  document.getElementById('savePngBtn').addEventListener('click', async ()=>{
     const capture = document.getElementById('captureArea');
-
-    // 이미지 저장 때 테두리/그림자 포함해서 예쁘게
-    const canvas = await html2canvas(capture, {
-      scale: 2,
-      backgroundColor: null
-    });
-
+    const canvas = await html2canvas(capture, { scale:2, backgroundColor:'#ffffff' });
     canvas.toBlob((blob)=>{
       const a = document.createElement('a');
       const s = startDate.value || 'start';
@@ -501,9 +275,6 @@
       URL.revokeObjectURL(a.href);
     }, 'image/png');
   });
-
-  // ✅ 최초 날짜 표시
-  updateRange();
 </script>
 </body>
 </html>

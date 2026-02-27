@@ -422,3 +422,42 @@ footer p { font-weight: 700; color: #888; margin-bottom: 4px; }
   width: 100%;
 }
 .delete-photo-btn:hover { background: #e03055; }
+
+/* ===== 주간도우미 역할 설명 모바일 정렬 수정 ===== */
+
+.descBox{
+  margin-top:10px;
+  border:1px solid #e8e8e8;
+  border-radius:14px;
+  padding:10px 12px;
+  background:#fff;
+  font-size:13px;
+  line-height:1.5;
+}
+
+/* 한 줄 = [역할] [설명] 2칸 고정 */
+.descBox > div{
+  display:grid;
+  grid-template-columns: 90px 1fr;
+  gap:10px;
+  align-items:start;
+  padding:6px 0;
+}
+
+/* 줄 사이 구분선 */
+.descBox > div + div{
+  border-top:1px dashed #e8e8e8;
+}
+
+/* 역할명 줄바꿈 방지 */
+.descBox b{
+  white-space:nowrap;
+}
+
+/* 아주 작은 화면에서 역할칸 조금 더 줄이기 */
+@media (max-width: 420px){
+  .descBox > div{
+    grid-template-columns: 70px 1fr;
+    gap:8px;
+  }
+}
