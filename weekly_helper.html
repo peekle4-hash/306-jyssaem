@@ -130,14 +130,15 @@
 const students = [
   "김지후","노지승","공소연","양지민","오시은","우성아","우지민",
   "유정인","윤채영","이연수","이윤아","이지우","정채윤","조수연",
-  "최민지","최수빈","황세인","황유민",
-  "안다현"
-];
+  "최민지","최수빈","황세인","황유민",];
 const COL_LAYOUT = [5,5,4,4];
 
   function koSort(a,b){ return a.localeCompare(b,'ko'); }
   const sorted = [...students].sort(koSort);
-  const numOf  = new Map(sorted.map((n,i)=>[n,i+1]));
+  
+// 안다현은 19번 고정
+if (sorted.includes('안다현')) { sorted.splice(sorted.indexOf('안다현'),1); sorted.push('안다현'); }
+const numOf  = new Map(sorted.map((n,i)=>[n,i+1]));
   const disp   = n => `${numOf.get(n)||''}. ${n}`;
 
   const pool = document.getElementById('studentPool');
