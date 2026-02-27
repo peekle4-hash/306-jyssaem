@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>좌석표 (5/5/5/4)</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root{
+      --bg:#f7f7fb; --card:#fff; --line:#e6e7ee; --text:#1f2330;
+      --muted:#6b7280; --chip:#f1f5ff; --chipLine:#c9d6ff;
+      --seat:#fff; --seatLine:#d9dde8;
+      --okBg:#effdf2; --okLine:#86efac;
+      --warnBg:#fff7ed; --warnLine:#fdba74;
+      --dangerBg:#fff1f2; --dangerLine:#fda4af;
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+    html,body{margin:0;padding:0;
+      font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+      background:var(--bg);color:var(--text);}
+
+    /* ══ 공통 컴포넌트 ══ */
+    .chip{
+      user-select:none;-webkit-user-select:none;
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 12px;border-radius:999px;
+      border:1px solid var(--chipLine);background:var(--chip);
+      font-weight:800;cursor:grab;white-space:nowrap;
+      touch-action:none;-webkit-touch-callout:none;
+      min-width:0;
+    }
+    .chip:active{cursor:grabbing;}
+    .chip.dragging{opacity:.4;}
+
+    .seat{
+      background:var(--seat);border:1.5px solid var(--seatLine);
+      border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      padding:6px 10px;position:relative;touch-action:none;
+      transition:background .12s,outline .1s;
+    }
+    .seat.over{background:#f0fff4;outline:2px solid #86efac;outline-offset:2px;}
+    .seat[data-filled="false"]::after{
+      content:"드롭";position:absolute;bottom:5px;right:9px;
+      font-size:10px;color:#c0c7d4;font-weight:800;
+    }
+    .seat-no{
+      position:absolute;top:5px;left:9px;
+      font-size:10px;color:#b0b8cc;font-weight:900;
+      line-height:1;pointer-events:none;
+    }
+    .seat .chip{width:100%;justify-content:center;cursor:pointer;border:none;background:#eff6ff;}
+    .seat .chip:hover{background:#fee2e2;}
+
+    .cols{display:flex;justify-content:center;gap:10px;align-items:flex-end;margin:6px 0;}
+    .col{display:flex;flex-direction:column;gap:10px;}
+
+    .pill{
+      display:inline-flex;align-items:center;
+      padding:5px 10px;border-radius:999px;
+      border:1px solid var(--line);background:#fff;
+      font-size:12px;font-weight:800;white-space:nowrap;
+    }
+    .pill.ok    {background:var(--okBg);    border-color:var(--okLine);}
+    .pill.warn  {background:var(--warnBg);  border-color:var(--warnLine);}
+    .pill.danger{background:var(--dangerBg);border-color:var(--dangerLine);}
+
+    button{
+      border:1px solid var(--line);background:#fff;
+      padding:9px 12px;border-radius:10px;cursor:pointer;
+      font-weight:700;font-family:inherit;font-size:14px;
+    }
+    button:hover{filter:brightness(.97);}
+    .dangerBtn{border-color:#ffd3d3;}
+    .primaryBtn{border-color:#c7d2fe;background:#eef2ff;}
+
+    .desk-bar{
+      margin-top:12px;background:#0b1020;color:#fff;
+      border-radius:14px;padding:12px;text-align:center;
+      font-weight:900;letter-spacing:1px;
+    }
+
+    /* 드래그 고스트 */
+    .drag-ghost{
+      position:fixed;z-index:9999;pointer-events:none;
+      border-radius:999px;padding:9px 16px;
+      background:#4f46e5;color:#fff;font-weight:800;font-size:14px;
+      white-space:nowrap;opacity:.88;
+      box-shadow:0 6px 20px rgba(79,70,229,.35);
+      transform:rotate(-2deg) scale(1.06);
+    }
+
+    /* ══════════════════════
+       PC 레이아웃 (>760px)
+    ══════════════════════ */
+    .pc-wrap{
+      max-width:1040px;margin:0 auto;padding:18px;
+      display:grid;gap:14px;grid-template-columns:330px 1fr;
+    }
+    .panel,.stage{
+      background:var(--card);border:1px solid var(--line);
+      border-radius:14px;padding:14px;
+    }
+    h1{font-size:18px;margin:0 0 10px;}
+    .hint{font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5;}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+    .names{
+      display:flex;flex-wrap:wrap;gap:8px;padding:10px;
+      border:1px dashed var(--line);border-radius:12px;
+      min-height:110px;background:#fafafe;
+    }
+    .stageHead{
+      display:flex;align-items:flex-start;
+      justify-content:space-between;gap:10px;margin-bottom:10px;
+    }
+    .meta{display:flex;gap:8px;flex-wrap:wrap;}
+    .meta input{
+      border:1px solid var(--line);border-radius:10px;
+      padding:9px 12px;font-weight:700;min-width:170px;
+      background:#fff;font-family:inherit;
+    }
+    .statusBox{
+      margin:0 0 10px;padding:10px 12px;
+      border-radius:12px;border:1px solid var(--line);background:#fff;
+    }
+    .statusRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .details{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.5;word-break:keep-all;}
+    .boardWrap{
+      border:1px solid var(--line);border-radius:14px;
+      background:#fbfbff;padding:14px;touch-action:none;
+    }
+    .pc-seat{width:132px;height:56px;}
+    .small{font-size:12px;color:var(--muted);margin-top:8px;}
+
+    /* ══════════════════════════════════════
+       모바일 레이아웃 (≤760px)
+       화면 전체를 고정, 내부만 스크롤
+    ══════════════════════════════════════ */
+    .mobile-wrap{display:none;}
+
+    @media(max-width:760px){
+      html,body{height:100%;overflow:hidden;}
+      .pc-wrap{display:none!important;}
+      .mobile-wrap{
+        display:flex;flex-direction:column;
+        height:100dvh;height:100vh; /* fallback */
+        overflow:hidden;
+      }
+    }
+
+    /* 상단 툴바 */
+    .m-topbar{
+      flex-shrink:0;background:#fff;
+      border-bottom:1px solid var(--line);
+      padding:8px 12px;
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+    }
+    .m-topbar h2{font-size:15px;margin:0;font-weight:900;}
+    .m-topbar-btns{display:flex;gap:6px;}
+    .m-topbar-btns button{padding:8px 10px;font-size:12px;border-radius:8px;}
+
+    /* 상태바 */
+    .m-statusbar{
+      flex-shrink:0;background:#fff;
+      border-bottom:1px solid var(--line);
+      padding:5px 10px;
+      display:flex;gap:6px;align-items:center;
+      overflow-x:auto;-webkit-overflow-scrolling:touch;
+    }
+    .m-details{
+      flex-shrink:0;font-size:11px;color:var(--muted);
+      padding:3px 12px 4px;background:#fafafe;
+      border-bottom:1px solid var(--line);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+
+    /* 이름 팔레트: 고정 영역, 내부 스크롤 */
+    .m-palette{
+      flex-shrink:0;
+      padding:8px 10px 10px;
+      background:#fafafe;
+      border-bottom:2px solid #e2e8f0;
+      max-height:28vh;overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .m-palette-label{
+      font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;
+    }
+    .m-palette .names{
+      min-height:unset;border:none;padding:0;background:transparent;gap:6px;
+    }
+    .m-palette .chip{font-size:13px;padding:7px 12px;}
+
+    /* 좌석 영역: 남은 공간 전부, 세로만 스크롤 */
+    .m-seats{
+      flex:1 1 0;
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:8px;background:var(--bg);
+      touch-action:pan-y;
+    }
+    .m-seats.locking{overflow:hidden;touch-action:none;}
+
+    .m-boardWrap{
+      background:#fff;border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 6px 12px;
+      width:100%;
+    }
+
+    /* 4열이 항상 화면 안에 꽉 맞도록: 각 열이 flex:1로 균등 분배 */
+    .m-boardWrap .cols{
+      gap:6px;
+      flex-wrap:nowrap;
+      width:100%;
+      justify-content:stretch;
+      align-items:flex-end;
+    }
+    .m-boardWrap .col{ gap:8px; flex:1 1 0; min-width:0; }
+
+    .m-seat{
+      width:100%;
+      min-width:0;
+      height:52px;
+    }
+    .m-seat[data-filled="false"]::after{ display:none; }
+    .m-seat .seat-no{ font-size:9px; }
+    .m-seat .chip{
+      font-size:clamp(11px, 3.2vw, 14px);
+      padding:5px 4px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+
+    /* ══ 모드 전환 탭 ══ */
+    .mode-tabs{
+      display:flex;gap:0;margin-bottom:14px;
+      border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    }
+    .mode-tab{
+      flex:1;padding:10px;text-align:center;cursor:pointer;
+      font-weight:800;font-size:14px;background:#fff;
+      border:none;border-radius:0;transition:background .15s,color .15s;
+    }
+    .mode-tab.active{background:#0b1020;color:#fff;}
+    .mode-tab:first-child{border-right:1px solid var(--line);}
+
+    /* ══ 모둠 그리드 ══ */
+    .group-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .group-card{
+      border:2px solid var(--line);border-radius:14px;
+      background:#fff;
+      display:flex;flex-direction:column;
+    }
+    .group-header{
+      padding:7px 12px;font-weight:900;font-size:13px;
+      display:flex;align-items:center;justify-content:space-between;
+      color:#fff;flex-shrink:0;border-radius:11px 11px 0 0;
+    }
+    .group-header .g-count{font-size:11px;opacity:.85;font-weight:700;}
+    .group-body{
+      padding:8px;
+      display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;
+      min-height:80px;
+      touch-action:none;
+      transition:background .12s;
+    }
+    .group-body.over{background:#f0fff4;outline:2px solid #86efac;outline-offset:-2px;}
+    .group-body .chip{font-size:12px;padding:5px 10px;}
+    .group-body .chip:hover{background:#fee2e2;}
+
+    .names.over{background:#f0fff4;border:1.5px solid #86efac;}
+
+    /* 모둠 색상 */
+    .gc0{background:linear-gradient(135deg,#6366f1,#4f46e5);}
+    .gc1{background:linear-gradient(135deg,#f59e0b,#d97706);}
+    .gc2{background:linear-gradient(135deg,#10b981,#059669);}
+    .gc3{background:linear-gradient(135deg,#ef4444,#dc2626);}
+    .group-card.gc0{border-color:#c7d2fe;}
+    .group-card.gc1{border-color:#fde68a;}
+    .group-card.gc2{border-color:#a7f3d0;}
+    .group-card.gc3{border-color:#fecaca;}
+
+    .m-seat-wrap{
+      display:flex;flex-direction:column;
+      flex:1 1 0;overflow:hidden;
+    }
+
+    /* 모둠 모드 숨김 */
+    .seat-mode-content{display:block;}
+    .group-mode-content{display:none;}
+    body.group-mode .seat-mode-content{display:none;}
+    body.group-mode .group-mode-content{display:block;}
+    @media(max-width:760px){
+      .m-seat-wrap.seat-mode-content{display:flex;flex-direction:column;}
+      body.group-mode .group-mode-content{display:flex;flex-direction:column;flex:1 1 0;overflow-y:auto;}
+      /* 모바일: 모둠 그리드를 화면에 꽉 맞게 */
+      .group-grid{ gap:8px; }
+      .group-body{ min-height:50px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── PC 레이아웃 ── -->
+<div class="pc-wrap">
+  <section class="panel">
+    <h1>학생 이름표</h1>
+    <p class="hint">이름표를 <b>좌석칸</b>으로 끌어놓으면 배치됩니다.<br>
+      좌석에 들어간 이름표는 <b>짧게 탭</b>하면 다시 여기로 돌아옵니다.</p>
+    <div id="pcPool" class="names"></div>
+    <div class="toolbar">
+      <button id="pcResetBtn" class="dangerBtn">전체 초기화</button>
+    </div>
+    <p class="small">※ 번호는 가나다순 기준</p>
+  </section>
+
+  <section class="stage">
+    <div class="stageHead">
+      <div style="min-width:260px;">
+        <h1 style="margin:0 0 8px;">좌석표 (왼쪽부터 5/5/4/4)</h1>
+        <div class="meta">
+          <input id="titleInput" placeholder="예: 3-6 (2차자리)" />
+          <input id="dateInput"  placeholder="예: 2026-03-05" />
+        </div>
+      </div>
+      <div class="toolbar" style="margin:0;">
+        <button id="pcExamBtn" class="primaryBtn">📝 시험 대형 배치</button>
+        <button id="pcRandomSeatBtn" style="border-color:#e9d5ff;background:#faf5ff;">🎲 랜덤 배치</button>
+        <button id="pcGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;">👥 모둠 구성</button>
+        <button id="pcSaveBtn" class="primaryBtn">PNG 저장</button>
+      </div>
+    </div>
+    <div class="statusBox">
+      <div class="statusRow" id="pcStatusRow"></div>
+      <div class="details"   id="pcStatusDets"></div>
+    </div>
+
+    <!-- 좌석 배치 모드 -->
+    <div class="seat-mode-content">
+      <div id="pcCapture" class="boardWrap">
+        <div id="pcBoard"></div>
+        <div class="desk-bar">교탁</div>
+      </div>
+    </div>
+
+    <!-- 모둠 구성 모드 -->
+    <div class="group-mode-content">
+      <div id="pcGroupCapture" class="boardWrap" style="padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <span style="font-weight:900;font-size:15px;">👥 모둠 구성</span>
+          <div style="display:flex;gap:8px;">
+            <button id="pcRandomGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;font-size:13px;padding:7px 12px;">🎲 랜덤 배정</button>
+            <button id="pcClearGroupBtn" class="dangerBtn" style="font-size:13px;padding:7px 12px;">전체 초기화</button>
+          </div>
+        </div>
+        <div class="group-grid" id="pcGroupGrid"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── 모바일 레이아웃 ── -->
+<div class="mobile-wrap">
+  <div class="m-topbar">
+    <h2>🪑 3-6 자리배치</h2>
+    <div class="m-topbar-btns">
+      <button id="mResetBtn" class="dangerBtn">초기화</button>
+      <button id="mExamBtn"  class="primaryBtn">📝 시험배치</button>
+      <button id="mRandomSeatBtn" style="border-color:#e9d5ff;background:#faf5ff;font-size:12px;padding:8px 10px;border-radius:8px;">🎲 랜덤</button>
+      <button id="mGroupBtn" style="border-color:#d1fae5;background:#ecfdf5;font-size:12px;padding:8px 10px;border-radius:8px;">👥 모둠</button>
+      <button id="mSaveBtn"  class="primaryBtn">💾 PNG</button>
+    </div>
+  </div>
+  <div class="m-statusbar" id="mStatusBar"></div>
+  <div class="m-details"   id="mDetails"></div>
+
+  <!-- 팔레트: 좌석/모둠 모드 공통 -->
+  <div class="m-palette">
+    <div class="m-palette-label">📋 이름표를 아래 자리로 끌어다 놓으세요</div>
+    <div id="mPool" class="names"></div>
+  </div>
+
+  <!-- 모바일 좌석 모드 -->
+  <div class="seat-mode-content m-seat-wrap">
+    <div class="m-seats" id="mSeats">
+      <div class="m-boardWrap" id="mCapture">
+        <div id="mBoard"></div>
+        <div class="desk-bar">교탁</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모바일 모둠 모드 -->
+  <div class="group-mode-content" id="mGroupCapture" style="padding:8px;background:var(--bg);">
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button id="mRandomGroupBtn" style="flex:1;border-color:#d1fae5;background:#ecfdf5;font-size:13px;">🎲 랜덤 배정</button>
+      <button id="mClearGroupBtn" class="dangerBtn" style="flex:1;font-size:13px;">전체 초기화</button>
+    </div>
+    <div class="group-grid" id="mGroupGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════
+   데이터 / 공유 상태
+══════════════════════════════ */
+const GOOGLE_FORM_URL = "여기에_구글폼_응답링크_붙여넣기";
+
+const students = [
+  "김지후","노지승","공소연","양지민","오시은","우성아","우지민",
+  "유정인","윤채영","이연수","이윤아","이지우","정채윤","조수연",
+  "최민지","최수빈","황세인","황유민",
+  "안다현"
+];
+const COL_LAYOUT = [5,5,5,4];
+
+function koSort(a,b){ return a.localeCompare(b,'ko'); }
+const sorted = [...students].sort(koSort);
+
+// '안다현'은 신규 학생(19번)으로 마지막에 고정
+if (sorted.includes('안다현')) { sorted.splice(sorted.indexOf('안다현'),1); sorted.push('안다현'); }
+const numOf  = new Map(sorted.map((n,i)=>[n,i+1]));
+const disp   = n => `${numOf.get(n)||''}. ${n}`;
+
+// seatId → name | null
+const seatIds = [];
+COL_LAYOUT.forEach((cnt,c)=>{ for(let r=0;r<cnt;r++) seatIds.push(`${c}-${r}`); });
+const seatMap = new Map(seatIds.map(id=>[id,null]));
+
+/* ══ 칩 생성 ══ */
+function chip(name, onDown){
+  const el = document.createElement('div');
+  el.className = 'chip';
+  el.textContent = disp(name);
+  el.dataset.raw = name;
+  el.addEventListener('pointerdown', onDown);
+  return el;
+}
+
+/* ══ 좌석 그리드 생성 ══ */
+function buildGrid(container, seatClass, onChipDown){
+  container.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'cols';
+  // 각 열의 시작 번호 계산 (누적 합)
+  const colOffset = COL_LAYOUT.reduce((acc, cnt, i) => { acc[i] = (acc[i-1]||0) + (COL_LAYOUT[i-1]||0); return acc; }, []);
+  COL_LAYOUT.forEach((cnt,c)=>{
+    const col = document.createElement('div');
+    col.className = 'col';
+    for(let r=0;r<cnt;r++){
+      // 맨 아래(r=cnt-1)가 colOffset[c]+1, 위로 갈수록 +1
+      const seatNo = colOffset[c] + (cnt - r);
+      const seat = document.createElement('div');
+      seat.className = `seat ${seatClass}`;
+      seat.dataset.seatId = `${c}-${r}`;
+      seat.dataset.seatNo = seatNo;
+      seat.dataset.filled = 'false';
+      col.appendChild(seat);
+    }
+    wrap.appendChild(col);
+  });
+  container.appendChild(wrap);
+  syncGrid(container, seatClass, onChipDown);
+}
+
+function syncGrid(container, seatClass, onChipDown){
+  seatMap.forEach((name,id)=>{
+    const seat = container.querySelector(`[data-seat-id="${id}"]`);
+    if(!seat) return;
+    seat.innerHTML = '';
+    // 번호 표시
+    const noEl = document.createElement('span');
+    noEl.className = 'seat-no';
+    noEl.textContent = seat.dataset.seatNo;
+    seat.appendChild(noEl);
+    if(name){
+      seat.dataset.filled = 'true';
+      seat.appendChild(chip(name, onChipDown));
+    } else {
+      seat.dataset.filled = 'false';
+    }
+  });
+}
+
+function syncPool(pool, onDown){
+  const placed = new Set([...seatMap.values()].filter(Boolean));
+  pool.innerHTML = '';
+  sorted.filter(n=>!placed.has(n)).forEach(n=>pool.appendChild(chip(n,onDown)));
+}
+
+/* ══ 상태 업데이트 ══ */
+function updateStatus(){
+  const placed  = [...seatMap.values()].filter(Boolean);
+  const unplaced = sorted.filter(n=>!placed.includes(n));
+
+  const summary = unplaced.length ? `미배치: ${unplaced.map(disp).join(', ')}` : '✅ 미배치 없음';
+
+  // PC
+  const pr = document.getElementById('pcStatusRow');
+  const pd = document.getElementById('pcStatusDets');
+  if(pr){
+    pr.innerHTML = '';
+    [[`배치: ${placed.length}/${students.length}`,'ok'],
+     [`미배치: ${unplaced.length}`, unplaced.length?'warn':'ok'],
+    ].forEach(([t,c])=>{ const p=document.createElement('span'); p.className=`pill ${c}`; p.textContent=t; pr.appendChild(p); });
+    pd.textContent = summary;
+  }
+  // 모바일
+  const mb = document.getElementById('mStatusBar');
+  const md = document.getElementById('mDetails');
+  if(mb){
+    mb.innerHTML = '';
+    [[`배치 ${placed.length}/${students.length}`,'ok'],
+     [`미배치 ${unplaced.length}`, unplaced.length?'warn':'ok'],
+    ].forEach(([t,c])=>{ const p=document.createElement('span'); p.className=`pill ${c}`; p.textContent=t; mb.appendChild(p); });
+    md.textContent = summary;
+  }
+}
+
+/* ══ 배치 공통 처리 ══ */
+function placeName(name, toSeatId){
+  // 기존 위치에서 제거
+  seatMap.forEach((v,k)=>{ if(v===name) seatMap.set(k,null); });
+  seatMap.set(toSeatId, name);
+}
+function removeName(name){
+  seatMap.forEach((v,k)=>{ if(v===name) seatMap.set(k,null); });
+}
+
+function fullSync(){
+  buildGrid(document.getElementById('pcBoard'), 'pc-seat', makePCDown);
+  syncPool(document.getElementById('pcPool'), makePCDown);
+  buildGrid(document.getElementById('mBoard'), 'm-seat', makeMDown);
+  syncPool(document.getElementById('mPool'), makeMDown);
+  updateStatus();
+}
+
+function resetAll(){
+  seatMap.forEach((_,k)=>seatMap.set(k,null));
+  fullSync();
+}
+
+// 랜덤 배치: 학생을 좌석에 무작위 배정
+function randomSeating(){
+  seatMap.forEach((_,k)=>seatMap.set(k,null));
+  const shuffled = [...sorted].sort(()=>Math.random()-.5);
+  seatIds.forEach((id,i)=>{ if(i<shuffled.length) seatMap.set(id, shuffled[i]); });
+  fullSync();
+}
+function examSeating(){
+  // seatId → seatNo 매핑 먼저 구축 (buildGrid 호출 전이므로 직접 계산)
+  seatMap.forEach((_,k)=>seatMap.set(k,null));
+  const colOffset = COL_LAYOUT.reduce((acc, cnt, i) => { acc[i] = (acc[i-1]||0) + (COL_LAYOUT[i-1]||0); return acc; }, []);
+  // seatNo → seatId 역매핑
+  const noToId = new Map();
+  COL_LAYOUT.forEach((cnt,c)=>{
+    for(let r=0;r<cnt;r++){
+      const seatNo = colOffset[c] + (cnt - r);
+      noToId.set(seatNo, `${c}-${r}`);
+    }
+  });
+  // 학생 번호(numOf) 기준으로 배치
+  sorted.forEach(name=>{
+    const no = numOf.get(name);
+    const seatId = noToId.get(no);
+    if(seatId !== undefined) seatMap.set(seatId, name);
+  });
+  fullSync();
+}
+
+/* ══════════════════════════════
+   드래그 공통 로직
+══════════════════════════════ */
+function startDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, onCommit, onEnd}){
+  // 고스트
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = disp(name);
+  ghost.style.left = (clientX-40)+'px';
+  ghost.style.top  = (clientY-22)+'px';
+  document.body.appendChild(ghost);
+  sourceChip.classList.add('dragging');
+
+  let moved = false;
+  const startX = clientX, startY = clientY;
+
+  function move(cx, cy){
+    const dx = cx-startX, dy = cy-startY;
+    if(Math.abs(dx)+Math.abs(dy)>5) moved = true;
+    ghost.style.left = (cx-40)+'px';
+    ghost.style.top  = (cy-22)+'px';
+    clearOver();
+    const el = document.elementFromPoint(cx, cy);
+    el?.closest?.('.seat')?.classList.add('over');
+  }
+
+  function up(cx, cy){
+    clearOver();
+    ghost.remove();
+    sourceChip.classList.remove('dragging');
+    onEnd?.();
+
+    if(!moved){
+      // 탭 → 자리에 있으면 반환
+      const fs = sourceChip.closest('.seat');
+      if(fs){ seatMap.set(fs.dataset.seatId, null); onCommit(); }
+      return;
+    }
+    const el = document.elementFromPoint(cx, cy);
+    const seat = el?.closest?.('.seat');
+    if(seat){
+      const targetId = seat.dataset.seatId;
+      const targetName = seatMap.get(targetId); // 타겟 자리에 있는 학생
+      // 드래그한 학생의 원래 자리 찾기
+      let sourceSeatId = null;
+      seatMap.forEach((v,k)=>{ if(v===name) sourceSeatId=k; });
+      if(targetName && sourceSeatId){
+        // 둘 다 자리에 있으면 스왑
+        seatMap.set(sourceSeatId, targetName);
+        seatMap.set(targetId, name);
+      } else {
+        placeName(name, targetId);
+      }
+      onCommit();
+    } else if(el?.closest?.(`#${poolEl}`)){
+      removeName(name);
+      onCommit();
+    }
+  }
+
+  function clearOver(){
+    boardEl.querySelectorAll('.seat.over').forEach(s=>s.classList.remove('over'));
+  }
+
+  return { move, up };
+}
+
+/* ══ PC 드래그 ══ */
+let pcDrag = null;
+function makePCDown(e){
+  const ch = e.currentTarget;
+  ch.setPointerCapture(e.pointerId);
+  const drag = startDrag({
+    name: ch.dataset.raw,
+    sourceChip: ch,
+    clientX: e.clientX, clientY: e.clientY,
+    boardEl: document.getElementById('pcBoard'),
+    poolEl: 'pcPool',
+    onCommit: ()=>{ syncGrid(document.getElementById('pcBoard'),'pc-seat',makePCDown); syncPool(document.getElementById('pcPool'),makePCDown); updateStatus(); },
+    onEnd: ()=>{}
+  });
+  pcDrag = { id: e.pointerId, drag };
+  window.addEventListener('pointermove', onPCMove, {passive:false});
+  window.addEventListener('pointerup',   onPCUp,   {passive:false});
+}
+function onPCMove(e){ if(pcDrag&&e.pointerId===pcDrag.id){ e.preventDefault(); pcDrag.drag.move(e.clientX,e.clientY); } }
+function onPCUp(e){
+  if(!pcDrag||e.pointerId!==pcDrag.id) return;
+  e.preventDefault();
+  window.removeEventListener('pointermove',onPCMove);
+  window.removeEventListener('pointerup',onPCUp);
+  pcDrag.drag.up(e.clientX,e.clientY);
+  pcDrag = null;
+}
+
+/* ══ 모바일 드래그 ══ */
+let mDrag = null;
+const mSeats = document.getElementById('mSeats');
+
+function makeMDown(e){
+  const ch = e.currentTarget;
+  mSeats.classList.add('locking'); // 스크롤 차단
+  const drag = startDrag({
+    name: ch.dataset.raw,
+    sourceChip: ch,
+    clientX: e.clientX, clientY: e.clientY,
+    boardEl: document.getElementById('mBoard'),
+    poolEl: 'mPool',
+    onCommit: ()=>{ syncGrid(document.getElementById('mBoard'),'m-seat',makeMDown); syncPool(document.getElementById('mPool'),makeMDown); updateStatus(); },
+    onEnd: ()=>mSeats.classList.remove('locking')
+  });
+  mDrag = { id: e.pointerId, drag };
+  window.addEventListener('pointermove', onMMove, {passive:false});
+  window.addEventListener('pointerup',   onMUp,   {passive:false});
+  window.addEventListener('pointercancel', onMCancel);
+}
+function onMMove(e){ if(mDrag&&e.pointerId===mDrag.id){ e.preventDefault(); mDrag.drag.move(e.clientX,e.clientY); } }
+function onMUp(e){
+  if(!mDrag||e.pointerId!==mDrag.id) return;
+  e.preventDefault();
+  window.removeEventListener('pointermove',onMMove);
+  window.removeEventListener('pointerup',  onMUp);
+  window.removeEventListener('pointercancel',onMCancel);
+  mDrag.drag.up(e.clientX,e.clientY);
+  mDrag = null;
+}
+function onMCancel(){
+  mSeats.classList.remove('locking');
+  window.removeEventListener('pointermove',onMMove);
+  window.removeEventListener('pointerup',  onMUp);
+  window.removeEventListener('pointercancel',onMCancel);
+  mDrag = null;
+  document.querySelector('.drag-ghost')?.remove();
+}
+
+/* ══ PNG 저장 ══ */
+async function savePNG(){
+  const isMobile = window.innerWidth <= 760;
+  let cap;
+  if(isGroupMode){
+    cap = document.getElementById(isMobile ? 'mGroupCapture' : 'pcGroupCapture');
+  } else {
+    cap = document.getElementById(isMobile ? 'mCapture' : 'pcCapture');
+  }
+  const rawTitle = (document.getElementById('titleInput')?.value||'').trim();
+  const rawDate  = (document.getElementById('dateInput')?.value ||'').trim();
+  const cls   = rawTitle || '3-6';
+  const today = new Date();
+  const auto  = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const date  = rawDate || auto;
+  const match = cls.match(/\((.*?)\)/);
+  const ver   = isGroupMode ? '모둠배치' : (match ? match[1].replace(/\s/g,'') : '자리배치');
+  const clean = cls.replace(/\(.*?\)/,'').trim();
+  const fname = `${clean}_${date}_${ver}.png`.replace(/[\\/:*?"<>|]/g,'_');
+
+  const label = document.createElement('div');
+  label.style.cssText='text-align:center;font-weight:900;margin-bottom:10px;padding:10px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:15px;';
+  label.textContent = `${clean} | ${date} | ${ver}`;
+  cap.prepend(label);
+
+  const canvas = await html2canvas(cap,{scale:2,backgroundColor:'#ffffff'});
+  label.remove();
+
+  const a = document.createElement('a');
+  a.download = fname; a.href = canvas.toDataURL('image/png'); a.click();
+}
+
+/* ══════════════════════════════
+   모둠 구성 모드
+══════════════════════════════ */
+const GROUP_NAMES = ['1모둠','2모둠','3모둠','4모둠'];
+const GROUP_COLORS = ['gc0','gc1','gc2','gc3'];
+const GROUP_MAX = 5; // 모둠당 최대 인원
+// groupMap: 모둠번호(0~3) → [이름, ...]
+const groupMap = [[], [], [], []];
+
+let isGroupMode = false;
+
+function setGroupMode(on){
+  isGroupMode = on;
+  document.body.classList.toggle('group-mode', on);
+  const hint = document.querySelector('.panel .hint');
+  const mLabel = document.querySelector('.m-palette-label');
+  if(on){
+    if(hint) hint.innerHTML = '이름표를 <b>모둠 박스</b>로 끌어놓으면 배치됩니다.<br>이름을 <b>짧게 탭</b>하면 여기로 돌아옵니다.';
+    if(mLabel) mLabel.textContent = '📋 이름표를 모둠으로 끌어다 놓으세요';
+    fullGroupSync();
+  } else {
+    if(hint) hint.innerHTML = '이름표를 <b>좌석칸</b>으로 끌어놓으면 배치됩니다.<br>좌석에 들어간 이름표는 <b>짧게 탭</b>하면 다시 여기로 돌아옵니다.';
+    if(mLabel) mLabel.textContent = '📋 이름표를 아래 자리로 끌어다 놓으세요';
+    syncPool(document.getElementById('pcPool'), makePCDown);
+    syncPool(document.getElementById('mPool'), makeMDown);
+  }
+}
+
+/* ── 모둠 칩 생성 ── */
+function gChip(name, onDown){
+  const el = document.createElement('div');
+  el.className = 'chip';
+  el.textContent = disp(name);
+  el.dataset.raw = name;
+  el.addEventListener('pointerdown', onDown);
+  return el;
+}
+
+/* ── 모둠 그리드 렌더링 ── */
+function buildGroupGrid(gridEl, poolEl, isMobile){
+  gridEl.innerHTML = '';
+  GROUP_NAMES.forEach((gname, gi)=>{
+    const card = document.createElement('div');
+    card.className = `group-card ${GROUP_COLORS[gi]}`;
+
+    const header = document.createElement('div');
+    header.className = `group-header ${GROUP_COLORS[gi]}`;
+    header.innerHTML = `<span>${gname}</span><span class="g-count">${groupMap[gi].length}명</span>`;
+    card.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'group-body';
+    body.dataset.groupIdx = gi;
+    groupMap[gi].forEach(name=>{
+      body.appendChild(gChip(name, isMobile ? makeGMDown : makeGPCDown));
+    });
+    card.appendChild(body);
+    gridEl.appendChild(card);
+  });
+}
+
+function syncGroupPool(poolEl, isMobile){
+  const placed = new Set(groupMap.flat());
+  poolEl.innerHTML = '';
+  sorted.filter(n=>!placed.has(n)).forEach(n=>{
+    poolEl.appendChild(gChip(n, isMobile ? makeGMDown : makeGPCDown));
+  });
+}
+
+function fullGroupSync(){
+  buildGroupGrid(document.getElementById('pcGroupGrid'), document.getElementById('pcPool'), false);
+  syncGroupPool(document.getElementById('pcPool'), false);
+  buildGroupGrid(document.getElementById('mGroupGrid'), document.getElementById('mPool'), true);
+  syncGroupPool(document.getElementById('mPool'), true);
+}
+
+/* ── 모둠에 배치 ── */
+function placeInGroup(name, toGroupIdx){
+  // 기존 모둠에서 제거
+  groupMap.forEach(g=>{ const i=g.indexOf(name); if(i>-1) g.splice(i,1); });
+  groupMap[toGroupIdx].push(name);
+}
+function removeFromGroup(name){
+  groupMap.forEach(g=>{ const i=g.indexOf(name); if(i>-1) g.splice(i,1); });
+}
+
+/* ── 랜덤 배정 ── */
+function randomGroup(){
+  // 전체 초기화 후 섞어서 배정
+  groupMap.forEach(g=>g.length=0);
+  const shuffled = [...sorted].sort(()=>Math.random()-.5);
+  shuffled.forEach((name,i)=>{ groupMap[i%4].push(name); });
+  fullGroupSync();
+}
+function clearGroups(){
+  groupMap.forEach(g=>g.length=0);
+  fullGroupSync();
+}
+
+/* ── 모둠 드래그 공통 ── */
+function startGroupDrag({name, sourceChip, clientX, clientY, boardEl, poolEl, onCommit, onEnd}){
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = disp(name);
+  ghost.style.left = (clientX-40)+'px';
+  ghost.style.top  = (clientY-22)+'px';
+  document.body.appendChild(ghost);
+  sourceChip.classList.add('dragging');
+
+  let moved = false;
+  const startX = clientX, startY = clientY;
+
+  function move(cx,cy){
+    if(Math.abs(cx-startX)+Math.abs(cy-startY)>5) moved=true;
+    ghost.style.left=(cx-40)+'px'; ghost.style.top=(cy-22)+'px';
+    document.querySelectorAll('.group-body.over,.names.over').forEach(e=>e.classList.remove('over'));
+    const el=document.elementFromPoint(cx,cy);
+    el?.closest?.('.group-body')?.classList.add('over');
+    const maybePool=el?.closest?.(`#${poolEl}`);
+    if(maybePool) maybePool.classList.add('over');
+  }
+
+  function up(cx,cy){
+    document.querySelectorAll('.group-body.over,.names.over').forEach(e=>e.classList.remove('over'));
+    ghost.remove();
+    sourceChip.classList.remove('dragging');
+    onEnd?.();
+
+    if(!moved){
+      // 탭 → 모둠에서 제거 (pool로 반환)
+      const fb = sourceChip.closest('.group-body');
+      if(fb){ removeFromGroup(name); onCommit(); }
+      return;
+    }
+    const el = document.elementFromPoint(cx,cy);
+    const body = el?.closest?.('.group-body');
+    const pool = el?.closest?.(`#${poolEl}`);
+    if(body){
+      placeInGroup(name, parseInt(body.dataset.groupIdx));
+      onCommit();
+    } else if(pool){
+      removeFromGroup(name);
+      onCommit();
+    }
+  }
+  return {move,up};
+}
+
+/* ── PC 모둠 드래그 ── */
+let gpcDrag=null;
+function makeGPCDown(e){
+  const ch=e.currentTarget;
+  ch.setPointerCapture(e.pointerId);
+  const boardEl = document.getElementById('pcGroupCapture');
+  const drag=startGroupDrag({
+    name:ch.dataset.raw, sourceChip:ch,
+    clientX:e.clientX, clientY:e.clientY,
+    boardEl, poolEl:'pcPool',
+    onCommit:fullGroupSync, onEnd:()=>{}
+  });
+  gpcDrag={id:e.pointerId,drag};
+  window.addEventListener('pointermove',onGPCMove,{passive:false});
+  window.addEventListener('pointerup',  onGPCUp,  {passive:false});
+}
+function onGPCMove(e){if(gpcDrag&&e.pointerId===gpcDrag.id){e.preventDefault();gpcDrag.drag.move(e.clientX,e.clientY);}}
+function onGPCUp(e){
+  if(!gpcDrag||e.pointerId!==gpcDrag.id)return;
+  e.preventDefault();
+  window.removeEventListener('pointermove',onGPCMove);
+  window.removeEventListener('pointerup',onGPCUp);
+  gpcDrag.drag.up(e.clientX,e.clientY);
+  gpcDrag=null;
+}
+
+/* ── 모바일 모둠 드래그 ── */
+let gmDrag=null;
+function makeGMDown(e){
+  const ch=e.currentTarget;
+  const boardEl=document.getElementById('mGroupGrid').closest('div');
+  const drag=startGroupDrag({
+    name:ch.dataset.raw, sourceChip:ch,
+    clientX:e.clientX, clientY:e.clientY,
+    boardEl, poolEl:'mPool',
+    onCommit:fullGroupSync, onEnd:()=>{}
+  });
+  gmDrag={id:e.pointerId,drag};
+  window.addEventListener('pointermove',onGMMove,{passive:false});
+  window.addEventListener('pointerup',  onGMUp,  {passive:false});
+}
+function onGMMove(e){if(gmDrag&&e.pointerId===gmDrag.id){e.preventDefault();gmDrag.drag.move(e.clientX,e.clientY);}}
+function onGMUp(e){
+  if(!gmDrag||e.pointerId!==gmDrag.id)return;
+  e.preventDefault();
+  window.removeEventListener('pointermove',onGMMove);
+  window.removeEventListener('pointerup',onGMUp);
+  gmDrag.drag.up(e.clientX,e.clientY);
+  gmDrag=null;
+}
+
+/* ══ 버튼 이벤트 ══ */
+document.getElementById('pcResetBtn').addEventListener('click', resetAll);
+document.getElementById('pcExamBtn').addEventListener('click', examSeating);
+document.getElementById('pcRandomSeatBtn').addEventListener('click', randomSeating);
+document.getElementById('pcGroupBtn').addEventListener('click', ()=>setGroupMode(true));
+document.getElementById('pcSaveBtn').addEventListener('click',  savePNG);
+document.getElementById('pcRandomGroupBtn').addEventListener('click', randomGroup);
+document.getElementById('pcClearGroupBtn').addEventListener('click', clearGroups);
+
+document.getElementById('mResetBtn').addEventListener('click', resetAll);
+document.getElementById('mExamBtn').addEventListener('click', examSeating);
+document.getElementById('mRandomSeatBtn').addEventListener('click', randomSeating);
+document.getElementById('mGroupBtn').addEventListener('click', ()=>setGroupMode(true));
+document.getElementById('mRandomGroupBtn').addEventListener('click', randomGroup);
+document.getElementById('mClearGroupBtn').addEventListener('click', clearGroups);
+document.getElementById('mSaveBtn').addEventListener('click',  savePNG);
+
+// 좌석 모드로 돌아가기: pcExamBtn/pcResetBtn 쪽에서 모드 복귀
+document.getElementById('pcExamBtn').addEventListener('click', ()=>setGroupMode(false), true);
+document.getElementById('pcResetBtn').addEventListener('click', ()=>setGroupMode(false), true);
+document.getElementById('mExamBtn').addEventListener('click', ()=>setGroupMode(false), true);
+document.getElementById('mResetBtn').addEventListener('click', ()=>setGroupMode(false), true);
+
+/* ══ 초기화 ══ */
+fullSync();
+</script>
+</body>
+</html>
