@@ -133,152 +133,184 @@ const students = [
   "최민지","최수빈","황세인","황유민",
   "안다현"
 ];
-const COL_LAYOUT = [5,5,4,4];
 
-  function koSort(a,b){ return a.localeCompare(b,'ko'); }
-  const sorted = [...students].sort(koSort);
-  
-// 안다현은 19번 고정
-if (sorted.includes('안다현')) { sorted.splice(sorted.indexOf('안다현'),1); sorted.push('안다현'); }
+function koSort(a,b){ return a.localeCompare(b,'ko'); }
+const sorted = [...students].sort(koSort);
+
+// ✅ 안다현은 19번 고정(항상 마지막)
+if (sorted.includes("안다현")) {
+  sorted.splice(sorted.indexOf("안다현"), 1);
+  sorted.push("안다현");
+}
+
 const numOf  = new Map(sorted.map((n,i)=>[n,i+1]));
-  const disp   = n => `${numOf.get(n)||''}. ${n}`;
+const disp   = n => `${numOf.get(n)||''}. ${n}`;
 
-  const pool = document.getElementById('studentPool');
+const pool = document.getElementById('studentPool');
 
-  // ✅ 명단으로 돌아오면 “원래 번호 자리”로 자동 정렬 → 스왑/순서꼬임 방지
-  function insertToPoolSorted(chip){
-    const name = chip.dataset.name;
-    const myNum = numOf.get(name) || 9999;
-    const kids = [...pool.querySelectorAll('.chip')];
-    let inserted = false;
-    for (const k of kids){
-      const n = numOf.get(k.dataset.name) || 9999;
-      if (n > myNum){
-        pool.insertBefore(chip, k);
-        inserted = true;
-        break;
-      }
+// ✅ 명단으로 돌아오면 “원래 번호 자리”로 자동 정렬 → 스왑/순서꼬임 방지
+function insertToPoolSorted(chip){
+  const name = chip.dataset.name;
+  const myNum = numOf.get(name) || 9999;
+  const kids = [...pool.querySelectorAll('.chip')];
+  let inserted = false;
+  for (const k of kids){
+    const n = numOf.get(k.dataset.name) || 9999;
+    if (n > myNum){
+      pool.insertBefore(chip, k);
+      inserted = true;
+      break;
     }
-    if (!inserted) pool.appendChild(chip);
   }
+  if (!inserted) pool.appendChild(chip);
+}
 
-  // ✅ 역할칸에 들어간 칩을 “탭”하면 원래 명단으로 복귀
-  function makeChip(name){
-    const d = document.createElement('div');
-    d.className = 'chip';
-    d.textContent = disp(name);
-    d.dataset.name = name;
+// ✅ 역할칸에 들어간 칩을 “탭”하면 원래 명단으로 복귀
+function makeChip(name){
+  const d = document.createElement('div');
+  d.className = 'chip';
+  d.textContent = disp(name);
+  d.dataset.name = name;
 
-    d.addEventListener('click', ()=>{
-      const parent = d.parentElement;
-      if (parent && parent.id !== 'studentPool') insertToPoolSorted(d);
-    });
-    return d;
-  }
+  // (참고) click은 모바일에서 씹힐 수 있어 pointerup 탭복귀는 아래 드래그 로직에서 처리
+  d.addEventListener('click', ()=>{
+    const parent = d.parentElement;
+    if (parent && parent.id !== 'studentPool') insertToPoolSorted(d);
+  });
 
-  sorted.forEach(n => pool.appendChild(makeChip(n)));
+  return d;
+}
 
-  // 날짜 표시
-  const startDate = document.getElementById('startDate');
-  const endDate   = document.getElementById('endDate');
-  const rangeText = document.getElementById('rangeText');
-  function updateRange(){
-    const s = startDate.value;
-    const e = endDate.value;
-    rangeText.textContent = (!s && !e) ? '기간: (날짜 선택)' : `기간: ${s||'?'} ~ ${e||'?'}`;
-  }
-  startDate.addEventListener('change', updateRange);
-  endDate.addEventListener('change', updateRange);
-  updateRange();
+sorted.forEach(n => pool.appendChild(makeChip(n)));
 
-  // 터치/마우스 드래그
-  let draggingEl = null, ghost = null;
+// 날짜 표시
+const startDate = document.getElementById('startDate');
+const endDate   = document.getElementById('endDate');
+const rangeText = document.getElementById('rangeText');
+function updateRange(){
+  const s = startDate.value;
+  const e = endDate.value;
+  rangeText.textContent = (!s && !e) ? '기간: (날짜 선택)' : `기간: ${s||'?'} ~ ${e||'?'}`;
+}
+startDate.addEventListener('change', updateRange);
+endDate.addEventListener('change', updateRange);
+updateRange();
 
-  function makeGhost(fromEl, x, y){
-    ghost = fromEl.cloneNode(true);
-    ghost.classList.add('dragGhost');
-    ghost.style.left = x + 'px';
-    ghost.style.top  = y + 'px';
-    document.body.appendChild(ghost);
-  }
-  function moveGhost(x,y){ if(ghost){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; } }
-  function removeGhost(){ if(ghost){ ghost.remove(); ghost=null; } }
+// 터치/마우스 드래그
+let draggingEl = null, ghost = null;
 
-  function zoneCapacityOk(zone){
-    const max = parseInt(zone.dataset.max || '1', 10);
-    return zone.querySelectorAll('.chip').length < max;
-  }
-  function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
+// ✅ 탭/드래그 구분을 위한 변수
+let startX = 0, startY = 0;
+let moved = false;
 
-  document.addEventListener('pointerdown', (e)=>{
-    const target = e.target.closest('.chip');
-    if(!target) return;
-    draggingEl = target;
-    draggingEl.setPointerCapture?.(e.pointerId);
-    makeGhost(draggingEl, e.clientX, e.clientY);
-    e.preventDefault();
-  }, {passive:false});
+function makeGhost(fromEl, x, y){
+  ghost = fromEl.cloneNode(true);
+  ghost.classList.add('dragGhost');
+  ghost.style.left = x + 'px';
+  ghost.style.top  = y + 'px';
+  document.body.appendChild(ghost);
+}
+function moveGhost(x,y){ if(ghost){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; } }
+function removeGhost(){ if(ghost){ ghost.remove(); ghost=null; } }
 
-  document.addEventListener('pointermove', (e)=>{
-    if(!draggingEl) return;
-    moveGhost(e.clientX, e.clientY);
-    clearOver();
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    const zone = el?.closest('.dropzone');
-    if(zone) zone.classList.add('is-over');
-    e.preventDefault();
-  }, {passive:false});
+function zoneCapacityOk(zone){
+  const max = parseInt(zone.dataset.max || '1', 10);
+  return zone.querySelectorAll('.chip').length < max;
+}
+function clearOver(){ document.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('is-over')); }
 
-  document.addEventListener('pointerup', (e)=>{
-    if(!draggingEl) return;
-    clearOver();
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    const zone = el?.closest('.dropzone');
-    if(zone){
-      const fromZone = draggingEl.parentElement;
-      if(zone.id === 'studentPool'){
-        insertToPoolSorted(draggingEl);
-      } else if(zoneCapacityOk(zone)){
-        zone.appendChild(draggingEl);
-      } else {
-        // 드롭존이 꽉 찬 경우 → 기존 칩과 스왑
-        const existingChip = zone.querySelector('.chip');
-        if(existingChip && fromZone){
-          if(fromZone.id === 'studentPool'){
-            insertToPoolSorted(existingChip);
-          } else {
-            fromZone.appendChild(existingChip);
-          }
-          zone.appendChild(draggingEl);
-        }
-      }
-    }
+document.addEventListener('pointerdown', (e)=>{
+  const target = e.target.closest('.chip');
+  if(!target) return;
+
+  draggingEl = target;
+  startX = e.clientX;
+  startY = e.clientY;
+  moved = false;
+
+  draggingEl.setPointerCapture?.(e.pointerId);
+  makeGhost(draggingEl, e.clientX, e.clientY);
+  e.preventDefault();
+}, {passive:false});
+
+document.addEventListener('pointermove', (e)=>{
+  if(!draggingEl) return;
+
+  // ✅ 일정 거리 이상 움직였을 때만 "드래그"로 인정 (탭 vs 드래그 구분)
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  if ((dx*dx + dy*dy) > 36) moved = true; // 6px threshold
+
+  moveGhost(e.clientX, e.clientY);
+  clearOver();
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const zone = el?.closest('.dropzone');
+  if(zone) zone.classList.add('is-over');
+  e.preventDefault();
+}, {passive:false});
+
+document.addEventListener('pointerup', (e)=>{
+  if(!draggingEl) return;
+  clearOver();
+
+  const fromZone = draggingEl.parentElement;
+
+  // ✅ "탭"이면(거의 안 움직였으면) 역할칸 -> 명단으로 복귀
+  if(!moved && fromZone && fromZone.id !== 'studentPool'){
+    insertToPoolSorted(draggingEl);
     draggingEl = null;
     removeGhost();
     e.preventDefault();
-  }, {passive:false});
+    return;
+  }
 
-  document.addEventListener('pointercancel', ()=>{ draggingEl=null; removeGhost(); });
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const zone = el?.closest('.dropzone');
+  if(zone){
+    if(zone.id === 'studentPool'){
+      insertToPoolSorted(draggingEl);
+    } else if(zoneCapacityOk(zone)){
+      zone.appendChild(draggingEl);
+    } else {
+      // 드롭존이 꽉 찬 경우 → 기존 칩과 스왑
+      const existingChip = zone.querySelector('.chip');
+      if(existingChip && fromZone){
+        if(fromZone.id === 'studentPool'){
+          insertToPoolSorted(existingChip);
+        } else {
+          fromZone.appendChild(existingChip);
+        }
+        zone.appendChild(draggingEl);
+      }
+    }
+  }
 
-  // 전체 초기화
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
-    document.querySelectorAll('#captureArea .dropzone .chip').forEach(ch => insertToPoolSorted(ch));
-  });
+  draggingEl = null;
+  removeGhost();
+  e.preventDefault();
+}, {passive:false});
 
-  // PNG 저장
-  document.getElementById('savePngBtn').addEventListener('click', async ()=>{
-    const capture = document.getElementById('captureArea');
-    const canvas = await html2canvas(capture, { scale:2, backgroundColor:'#ffffff' });
-    canvas.toBlob((blob)=>{
-      const a = document.createElement('a');
-      const s = startDate.value || 'start';
-      const e = endDate.value || 'end';
-      a.download = `주간도우미_${s}_${e}.png`;
-      a.href = URL.createObjectURL(blob);
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }, 'image/png');
-  });
+document.addEventListener('pointercancel', ()=>{ draggingEl=null; removeGhost(); });
+
+// 전체 초기화
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('#captureArea .dropzone .chip').forEach(ch => insertToPoolSorted(ch));
+});
+
+// PNG 저장
+document.getElementById('savePngBtn').addEventListener('click', async ()=>{
+  const capture = document.getElementById('captureArea');
+  const canvas = await html2canvas(capture, { scale:2, backgroundColor:'#ffffff' });
+  canvas.toBlob((blob)=>{
+    const a = document.createElement('a');
+    const s = startDate.value || 'start';
+    const e = endDate.value || 'end';
+    a.download = `주간도우미_${s}_${e}.png`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, 'image/png');
+});
 </script>
 </body>
 </html>
